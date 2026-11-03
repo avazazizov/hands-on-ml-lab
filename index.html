@@ -1,0 +1,1375 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Hands-On ML Laboratoriyası</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab notebook — chapter index on the left (chips on phones), one experiment at a time on the right:
+   everyday story → bench with a built-in guided tour → step list → takeaways → code → self-check. */
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --ink:#1a2140; --muted:#5a6280; --line:#dde1ec; --soft:#eef0f7;
+  --accent:#3346c9; --rec:#b23c8f; --good:#12806a; --warn:#b86d00; --bad:#c42f3a; --story:#fbf6ea; --story-line:#e7d9b5;
+  --c1:#3346c9; --c2:#b23c8f; --c3:#12806a; --c4:#b86d00; --c5:#6b4fd6;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10131d; --surface:#181c2a; --ink:#e6e9f4; --muted:#9ba3c0; --line:#2a3044; --soft:#21263a;
+  --accent:#8d9cff; --rec:#f07cc8; --good:#43cfad; --warn:#f2ab3e; --bad:#ff6f78; --story:#1f1d18; --story-line:#4a412b;
+  --c1:#8d9cff; --c2:#f07cc8; --c3:#43cfad; --c4:#f2ab3e; --c5:#b9a2ff; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#10131d; --surface:#181c2a; --ink:#e6e9f4; --muted:#9ba3c0; --line:#2a3044; --soft:#21263a;
+  --accent:#8d9cff; --rec:#f07cc8; --good:#43cfad; --warn:#f2ab3e; --bad:#ff6f78; --story:#1f1d18; --story-line:#4a412b;
+  --c1:#8d9cff; --c2:#f07cc8; --c3:#43cfad; --c4:#f2ab3e; --c5:#b9a2ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 72px}
+.shell{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:240px minmax(0,1fr);gap:36px}
+@media (max-width:880px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:1.55rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,4vw,2.2rem);font-weight:800;letter-spacing:-.015em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0;max-width:70ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lead{color:var(--muted);font-size:1.06rem}
+
+/* index */
+aside{display:flex;flex-direction:column;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start}
+aside .sub{font-size:.88rem;color:var(--muted)}
+nav{display:flex;flex-direction:column;gap:2px}
+nav a{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);padding:7px 10px;border-radius:8px;border-left:3px solid transparent;line-height:1.3}
+nav a .ch{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);letter-spacing:.04em}
+nav a:hover{background:var(--soft)}
+nav a[aria-current="page"]{background:var(--surface);border-left-color:var(--accent);font-weight:600}
+nav a.ext .t::after{content:" →";color:var(--muted)}
+.howto{font-size:.82rem;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:880px){
+  aside{position:static}
+  nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:6px;scrollbar-width:thin}
+  nav a{flex:0 0 auto;border-left:none;border:1px solid var(--line);background:var(--surface)}
+  nav a[aria-current="page"]{border-color:var(--accent)}
+  .howto{display:none}
+}
+
+/* sim */
+main{min-width:0}
+.sim{display:flex;flex-direction:column;gap:26px}
+.sim[hidden]{display:none}
+.sim-head{display:flex;flex-direction:column;gap:8px}
+.story{background:var(--story);border:1px solid var(--story-line);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.story .tag{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--warn)}
+.map{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:.92rem;margin:0}
+.map dt{font-weight:600}
+.map dd{margin:0;color:var(--muted)}
+.map dd b{color:var(--ink);font-weight:600}
+@media (max-width:520px){.map{grid-template-columns:1fr}.map dd{margin-bottom:6px}}
+
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px clamp(12px,2.6vw,24px);display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px}
+canvas{width:100%;display:block}
+.ctrls{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:end}
+.ctrl{display:flex;flex-direction:column;gap:4px;min-width:200px;flex:1}
+.ctrl label{font-size:.9rem;font-weight:500}
+.ctrl label .mono{color:var(--accent);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent);height:26px}
+select{font:inherit;font-size:.9rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.check{display:flex;gap:8px;align-items:center;font-size:.92rem;cursor:pointer}
+.check input{accent-color:var(--accent);width:17px;height:17px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-size:.88rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button.primary:hover{opacity:.9;color:var(--surface)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,.px:focus-visible,.tok:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.readout{display:flex;flex-wrap:wrap;gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;min-width:110px;flex:1}
+.stat .k{font-size:.76rem;color:var(--muted);font-family:var(--f-mono)}
+.stat .v{font-family:var(--f-display);font-weight:800;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.status{border-radius:10px;padding:10px 14px;background:var(--soft);font-size:.95rem}
+.status.good{border-left:4px solid var(--good)} .status.warn{border-left:4px solid var(--warn)} .status.bad{border-left:4px solid var(--bad)} .status.info{border-left:4px solid var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:6px}
+.legend i.ln{height:3px;width:18px;border-radius:2px;vertical-align:3px}
+
+/* guided tour inside the bench */
+.tour{border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb, var(--accent) 6%, var(--surface))}
+.tour.idle{border-style:dashed;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px}
+.tour-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tour .x{border:none;background:none;padding:2px 8px;font-size:1rem;color:var(--muted)}
+.tour-text{font-size:1rem}
+.tour-why{font-size:.93rem;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.tour-why b{color:var(--ink)}
+
+/* explain */
+.explain{display:flex;flex-direction:column;gap:14px}
+.explain ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+ol.guide{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:g}
+ol.guide li{counter-increment:g;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 12px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 10px;align-items:start}
+ol.guide li::before{content:counter(g);font-family:var(--f-display);font-weight:800;color:var(--accent);font-size:1.1rem;line-height:1.5}
+ol.guide .gt{min-width:0}
+ol.guide details{grid-column:2/4;font-size:.92rem;color:var(--muted)}
+ol.guide summary{cursor:pointer;color:var(--accent);font-size:.86rem}
+ol.guide details p{margin-top:4px}
+.key{background:var(--surface);border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.key > b:first-child{font-family:var(--f-display);color:var(--accent);font-size:1.02rem}
+.key ul{padding-left:18px}
+pre.code{margin:0;background:var(--soft);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:.84rem;line-height:1.55;color:var(--ink)}
+pre.code .c{color:var(--muted)}
+.quiz{display:flex;flex-direction:column;gap:8px}
+.quiz details{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px 14px}
+.quiz summary{cursor:pointer;font-weight:500}
+.quiz details[open] summary{margin-bottom:6px}
+.quiz details p+p{margin-top:6px}
+.formula{font-family:var(--f-mono);font-size:.98rem;background:var(--soft);border-radius:8px;padding:8px 12px;align-self:flex-start;max-width:100%;overflow-x:auto}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left}
+th{font-size:.8rem;color:var(--muted);font-weight:600}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+tr.hl td{background:var(--soft)}
+
+/* conv */
+.convrow{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.gridbox{display:flex;flex-direction:column;gap:6px}
+.gridbox .cap{font-size:.8rem;color:var(--muted);font-family:var(--f-mono)}
+.grid{display:grid;gap:2px}
+.px{width:24px;height:24px;border-radius:3px;background:var(--soft);border:1px solid transparent;display:flex;align-items:center;justify-content:center;font-family:var(--f-mono);font-size:9px;color:var(--ink)}
+#cv-in .px{cursor:pointer}
+#cv-in .px.on{background:var(--ink)}
+.px.win{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn) inset}
+.px.cur{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+#cv-out .px,#cv-pool .px{width:30px;height:30px}
+.kern{display:grid;grid-template-columns:repeat(3,52px);gap:3px}
+.kc{border:1px solid var(--line);border-radius:6px;padding:4px;text-align:center;font-family:var(--f-mono);font-size:.8rem;line-height:1.25}
+.kc small{display:block;color:var(--muted);font-size:.7rem}
+.kc.pos{color:var(--accent)} .kc.neg{color:var(--rec)}
+@media (max-width:520px){ .px{width:20px;height:20px} #cv-out .px,#cv-pool .px{width:24px;height:24px;font-size:8px} }
+
+/* attention */
+.toks{display:flex;flex-wrap:wrap;gap:8px}
+.tok{font:inherit;border:1.5px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;background:var(--surface);color:var(--ink);font-size:1rem}
+.tok.q{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tok .w{display:block;font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.wbar{height:10px;border-radius:5px;background:var(--accent);min-width:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+</head>
+<body>
+<div class="shell">
+<aside>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="eyebrow">İnteraktiv konspekt</div>
+    <h1>Hands-On ML Laboratoriyası</h1>
+    <p class="sub">Kitabın ən çətin başa düşülən yerləri — tərpədib öz gözünlə görmək üçün.</p>
+  </div>
+  <nav id="nav" aria-label="Mövzular">
+    <a href="#scaling" data-id="scaling"><span class="ch">Fəsil 2</span><span class="t">Feature scaling və outlier</span></a>
+    <a class="ext" href="precision-recall.html"><span class="ch">Fəsil 3</span><span class="t">Precision və recall</span></a>
+    <a href="#gd" data-id="gd"><span class="ch">Fəsil 4</span><span class="t">Gradient descent</span></a>
+    <a href="#overfit" data-id="overfit"><span class="ch">Fəsil 4</span><span class="t">Overfitting və regularizasiya</span></a>
+    <a href="#gini" data-id="gini"><span class="ch">Fəsil 5</span><span class="t">Qərar ağacı və Gini</span></a>
+    <a href="#pca" data-id="pca"><span class="ch">Fəsil 7</span><span class="t">PCA</span></a>
+    <a href="#kmeans" data-id="kmeans"><span class="ch">Fəsil 8</span><span class="t">K-means</span></a>
+    <a href="#backprop" data-id="backprop"><span class="ch">Fəsil 9 · Əlavə A</span><span class="t">Backpropagation</span></a>
+    <a href="#vanishing" data-id="vanishing"><span class="ch">Fəsil 11</span><span class="t">Yox olan qradiyentlər</span></a>
+    <a href="#conv" data-id="conv"><span class="ch">Fəsil 12</span><span class="t">Konvolyusiya və pooling</span></a>
+    <a href="#attention" data-id="attention"><span class="ch">Fəsil 14–15</span><span class="t">Attention</span></a>
+  </nav>
+  <div class="howto"><b style="color:var(--ink)">Necə öyrənməli</b><span>1. Həyatdan misalı oxu.</span><span>2. «Bələdçi ilə başla» düyməsini bas.</span><span>3. Sonra özün sərbəst tərpət.</span><span>4. Sonda özünü yoxla.</span></div>
+</aside>
+
+<main id="main">
+
+<!-- =================== SCALING =================== -->
+<section class="sim" id="s-scaling" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 2 · Datanın hazırlanması</span>
+    <h2>Feature scaling və outlier</h2>
+    <p class="lead">Sütunlar fərqli ölçü vahidindədirsə, model onları ədalətli müqayisə edə bilmir. Miqyaslama hamısını eyni «dilə» çevirir.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>İki dostun boyu 170 sm və 180 sm, maaşı 1000 və 1100 AZN-dir. Kim kimə daha çox bənzəyir? Rəqəmlərə baxsan, boy fərqi 10, maaş fərqi 100-dür — sanki maaş fərqi 10 dəfə böyükdür. Əslində isə 10 sm boy fərqi nəzərə çarpandır, 100 AZN maaş fərqi isə kiçikdir. İnsan bunu bilir, model bilmir: o, yalnız rəqəmlərin böyüklüyünü görür.</p>
+    <dl class="map">
+      <dt>Min-max</dt><dd>Hər sütunu <b>0 ilə 1 arasına</b> sıxır: ən kiçik dəyər 0, ən böyüyü 1 olur.</dd>
+      <dt>Standartlaşdırma</dt><dd>Hər dəyərin <b>ortadan neçə «addım» uzaq olduğunu</b> göstərir. 0 = orta, +1 = ortadan bir std yuxarı.</dd>
+      <dt>Outlier</dt><dd>Digərlərindən <b>çox uzaq</b> düşən dəyər (məs. 15 000 AZN maaş).</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-scaling">
+    <div class="tour" data-sim="scaling"></div>
+    <div class="ctrls">
+      <label class="check"><input type="checkbox" id="sc-out"> Outlier əlavə et (15 000 AZN maaş)</label>
+      <label class="check"><input type="checkbox" id="sc-log"> Miqyaslamadan əvvəl log tətbiq et</label>
+    </div>
+    <canvas id="sc-cv" aria-label="Orijinal, min-max və standartlaşdırılmış dəyərlər üç xətt üzərində"></canvas>
+    <div class="readout" id="sc-stats"></div>
+    <div class="status info" id="sc-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="scaling">
+      <li><span class="gt">Outlier yoxdur. Üç xəttə bax: nöqtələrin düzülüşü üçündə də <b>eynidir</b>, yalnız altdakı rəqəmlər dəyişib.</span><button class="go" type="button" data-set='{"sc-out":false,"sc-log":false}'>Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>Miqyaslama hər dəyərdən eyni ədədi çıxır və eyni ədədə bölür. Belə əməliyyat nöqtələrin sırasını və aralarındakı nisbəti dəyişmir — xətkeşin sm-dən düymə keçməsi kimi. Məsələn, min-max-da 820 → (820 − 820) ÷ (2300 − 820) = 0, 2300 → 1.</p></details></li>
+      <li><span class="gt">Bir nəfərin maaşı 15 000 AZN-dir. Min-max xəttinə bax: 9 normal maaş <b>sola, bir yerə yığıldı</b>.</span><button class="go" type="button" data-set='{"sc-out":true,"sc-log":false}'>Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>İndi max = 15 000-dir. Ən böyük normal maaş 2300 → (2300 − 820) ÷ (15 000 − 820) ≈ 0.10. Yəni 9 adamın hamısı 0–0.10 aralığına düşdü, 0.10–1 aralığı isə tamamilə boşdur. Model üçün bu 9 nəfər demək olar ki, eynidir.</p></details></li>
+      <li><span class="gt">İndi miqyaslamadan əvvəl log tətbiq et. Nöqtələr <b>yenidən yayıldı</b>.</span><button class="go" type="button" data-set='{"sc-out":true,"sc-log":true}'>Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>Log böyük ədədləri çox, kiçikləri az sıxır: log(2300) ≈ 7.7, log(15 000) ≈ 9.6. Fərq 12 700-dən cəmi 1.9-a endi. Outlier artıq digərlərini «əzmir».</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>Miqyaslama outlier-i <b>yox etmir</b>, sadəcə onu başqa şkalaya köçürür. Ağır quyruqlu sütunlarda əvvəlcə log və ya clip et.</li>
+        <li>KNN, SVM, logistic regression, neyron şəbəkələr və gradient descent miqyaslamaya ehtiyac duyur. Qərar ağacları və Random Forest isə yox.</li>
+        <li>Scaler-i <b>yalnız train</b> datasında öyrət (<code>fit</code>), test datasına sadəcə tətbiq et (<code>transform</code>).</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code"><span class="c"># standartlaşdırma</span>
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)   <span class="c"># öyrən + tətbiq et</span>
+X_test_s  = scaler.transform(X_test)        <span class="c"># yalnız tətbiq et</span>
+
+<span class="c"># əvvəlcə log, sonra miqyaslama — pipeline ilə</span>
+from sklearn.pipeline import make_pipeline
+log_then_scale = make_pipeline(FunctionTransformer(np.log1p), StandardScaler())</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Random Forest istifadə edirsənsə, StandardScaler lazımdırmı?</summary><p>Adətən <b>yox</b>. Ağac «x ≤ 1500?» kimi suallar verir. Bütün dəyərləri eyni qaydada miqyaslasan, sual «z ≤ 0.2?» olur, amma bölgü eyni qalır. Ona görə ağaclar şkaladan asılı deyil.</p></details>
+      <details><summary>2. Scaler-i niyə bütün datada (train + test) fit etmirik?</summary><p>Çünki o zaman test datasının ortası və std-si train-ə «sızır» (data leakage). Test datası «gələcəkdəki yeni data» rolunu oynayır — gələcəyin statistikasını əvvəlcədən bilə bilmərik.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== GRADIENT DESCENT =================== -->
+<section class="sim" id="s-gd" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 4 · Modellərin təlimi</span>
+    <h2>Gradient descent</h2>
+    <p class="lead">Model səhvini azaltmaq üçün parametrlərini addım-addım dəyişir. Hər addım «səhv hansı tərəfə azalır?» sualının cavabına görə atılır.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Gözübağlı halda dağdan dərəyə enirsən. Heç nə görmürsən, yalnız ayağının altındakı yerin hansı tərəfə maili olduğunu hiss edirsən. Hər dəfə aşağı gedən tərəfə bir addım atırsan. Addımların çox qısa olsa, saatlarla enərsən. Çox uzun olsa, dərənin üstündən o biri yamaca tullanarsan.</p>
+    <dl class="map">
+      <dt>Hündürlük</dt><dd>= <b>loss</b>, yəni modelin səhvi. Dərənin dibi ən kiçik səhvdir.</dd>
+      <dt>Sənin yerin</dt><dd>= <b>parametr θ</b> (modelin çəkisi).</dd>
+      <dt>Maillik</dt><dd>= <b>qradiyent</b>: səhv hansı tərəfə və nə qədər sürətlə artır.</dd>
+      <dt>Addımın uzunluğu</dt><dd>= <b>learning rate η</b>.</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-gd">
+    <div class="tour" data-sim="gd"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="gd-eta">Learning rate η: <span class="mono" id="gd-etav">0.10</span></label><input type="range" id="gd-eta" min="1" max="105" value="10"></div>
+      <div class="btns"><button class="primary" id="gd-step" type="button">1 addım</button><button id="gd-10" type="button">10 addım</button><button id="gd-reset" type="button">Sıfırla</button></div>
+    </div>
+    <canvas id="gd-cv" aria-label="Loss əyrisi və gradient descent addımları"></canvas>
+    <canvas id="gd-cv2" aria-label="Addımlara görə loss"></canvas>
+    <div class="readout" id="gd-stats"></div>
+    <div class="status" id="gd-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Bir addımı əl ilə hesablayaq</h3>
+    <p>Burada səhv funksiyası <span class="mono">J(θ) = (θ − 3)²</span>-dir, ən kiçik səhv θ = 3-də (0) olur. Mailliyi <span class="mono">2(θ − 3)</span> düsturu verir. Qayda:</p>
+    <div class="formula">yeni θ = köhnə θ − η × maillik</div>
+    <p>Başlanğıcda θ = −5, η = 0.1. Maillik = 2·(−5 − 3) = −16 (mənfi: sağa getdikcə səhv azalır). Yeni θ = −5 − 0.1·(−16) = <b>−3.4</b>. Bir addımda 1.6 vahid sağa, minimuma doğru getdik. «1 addım» düyməsini bas və yoxla.</p>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="gd">
+      <li><span class="gt">η = 0.03 ilə 10 addım. İstiqamət düzdür, amma addımlar <b>çox qısadır</b> — hələ də yoldasan.</span><button class="go" type="button" data-set='{"gd-eta":3}' data-click="gd-10">Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>Hər addımda səhvin yalnız 6%-i qədər yaxınlaşırsan (1 − 2·0.03 = 0.94). Minimuma çatmaq üçün ~110 addım lazımdır. Real modeldə bu, saatlarla əlavə təlim deməkdir.</p></details></li>
+      <li><span class="gt">η = 0.20 ilə 10 addım. Əvvəl <b>böyük</b>, sonra <b>kiçik</b> addımlar — sürətlə minimuma çatdı.</span><button class="go" type="button" data-set='{"gd-eta":20}' data-click="gd-10">Göstər</button>
+        <details><summary>Addımlar niyə özbaşına kiçilir?</summary><p>Addım = η × maillik. Minimumdan uzaqda yamac dikdir, maillik böyükdür. Dibə yaxınlaşdıqca yer düzləşir, maillik sıfıra yaxınlaşır — addım da onunla birgə kiçilir. η sabit qalır, kiçilən mailliyin özüdür.</p></details></li>
+      <li><span class="gt">η = 0.85 ilə 10 addım. <b>Zig-zag</b>: minimumun üstündən sağa-sola tullanır, amma yenə çatır.</span><button class="go" type="button" data-set='{"gd-eta":85}' data-click="gd-10">Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>Addım o qədər böyükdür ki, dibi keçib o biri yamaca düşürsən. Amma hər tullanış əvvəlkindən bir az qısadır (|1 − 2·0.85| = 0.7 &lt; 1), ona görə yavaş-yavaş ortaya yığılır.</p></details></li>
+      <li><span class="gt">η = 1.03 ilə 10 addım. <b>Partlayır</b>: hər tullanış əvvəlkindən uzundur, səhv sonsuzluğa gedir.</span><button class="go" type="button" data-set='{"gd-eta":103}' data-click="gd-10">Göstər</button>
+        <details><summary>Niyə belə oldu?</summary><p>İndi |1 − 2·1.03| = 1.06 &gt; 1 — hər addımda minimumdan uzaqlaşma 6% artır. Real təlimdə bu, loss-un birdən böyüyüb <code>NaN</code> olması kimi görünür.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>Learning rate ən vacib hiperparametrdir: <b>çox kiçik</b> — yavaş, <b>çox böyük</b> — tullanır və ya partlayır.</li>
+        <li>Real modeldə θ bir rəqəm deyil, milyonlarla çəkidir. Amma qayda eynidir: hər çəki öz qradiyentinin <b>əksinə</b> bir az dəyişir.</li>
+        <li>Batch GD bütün datada, SGD hər dəfə bir nümunədə, mini-batch GD kiçik qruplarda qradiyent hesablayır.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code"><span class="c"># Scikit-Learn</span>
+from sklearn.linear_model import SGDRegressor
+sgd = SGDRegressor(eta0=0.01, max_iter=1000)   <span class="c"># eta0 = learning rate</span>
+
+<span class="c"># PyTorch — bir təlim addımı</span>
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+loss.backward()         <span class="c"># qradiyentləri hesabla (maillik)</span>
+optimizer.step()        <span class="c"># θ = θ − lr × qradiyent</span>
+optimizer.zero_grad()</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Təlim zamanı loss əvvəl düşür, sonra birdən böyüyüb NaN olur. Nə edərsən?</summary><p>Learning rate-i kiçildərsən (məsələn, 10 dəfə). Bu, 4-cü addımdakı partlamanın real həyatdakı görünüşüdür.</p></details>
+      <details><summary>2. Feature scaling gradient descent-i niyə sürətləndirir?</summary><p>Sütunlar fərqli şkalada olanda «dərə» uzunsov olur: bir istiqamətdə çox dik, digərində çox yastı. GD dik divarlar arasında zig-zag gedir. Miqyaslanmış datada dərə dəyirmi olur və GD birbaşa dibə enir.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== OVERFITTING =================== -->
+<section class="sim" id="s-overfit" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 4 · Polinomial reqressiya və regularizasiya</span>
+    <h2>Overfitting və regularizasiya</h2>
+    <p class="lead">Model train datasını nə qədər yaxşı «yadda saxlayırsa», o qədər yaxşıdır? Xeyr. Vacib olan yeni dataya necə işlədiyidir.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Üç tələbə imtahana hazırlaşır. Birincisi yalnız bir-iki qayda öyrənib — heç bir suala tam cavab verə bilmir. İkincisi keçən ilin bütün suallarını cavabları ilə birlikdə hərfi-hərfinə əzbərləyib — köhnə suallarda 100 alır, amma sual bir az dəyişəndə kəsilir. Üçüncüsü mövzunu başa düşüb — yeni suallara da cavab verir.</p>
+    <dl class="map">
+      <dt>Birinci tələbə</dt><dd>= <b>underfitting</b> (model çox sadədir)</dd>
+      <dt>İkinci tələbə</dt><dd>= <b>overfitting</b> (model küyü əzbərləyib)</dd>
+      <dt>Keçən ilin sualları</dt><dd>= <b>train datası</b>; yeni imtahan = <b>validation / test</b></dd>
+      <dt>Regularizasiya</dt><dd>= müəllimin «əzbərləmə, qaydanı sadə saxla» deməsi</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-overfit">
+    <div class="tour" data-sim="overfit"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="of-deg">Modelin mürəkkəbliyi (polinomun dərəcəsi): <span class="mono" id="of-degv">3</span></label><input type="range" id="of-deg" min="1" max="15" value="3"></div>
+      <div class="ctrl"><label for="of-alpha">Regularizasiya gücü (Ridge α): <span class="mono" id="of-alphav">0</span></label><input type="range" id="of-alpha" min="0" max="8" value="0"></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>train nöqtələri (model görür)</span><span><i style="background:transparent;border:2px solid var(--rec)"></i>validation nöqtələri (model görmür)</span><span><i class="ln" style="background:var(--ink)"></i>modelin əyrisi</span><span><i class="ln" style="background:var(--muted)"></i>həqiqi qanunauyğunluq</span></div>
+    <canvas id="of-cv" aria-label="Nöqtələr və polinomial model"></canvas>
+    <canvas id="of-cv2" aria-label="Dərəcəyə görə train və validation xətası"></canvas>
+    <div class="readout" id="of-stats"></div>
+    <div class="status" id="of-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="overfit">
+      <li><span class="gt">Dərəcə 1 — düz xətt. Əyri formanı tuta bilmir: <b>underfitting</b>.</span><button class="go" type="button" data-set='{"of-deg":1,"of-alpha":0}'>Göstər</button>
+        <details><summary>Necə tanıyım?</summary><p>Həm train, həm validation xətası yüksəkdir və bir-birinə yaxındır. Model nə gördüyü datada, nə də yeni datada yaxşı deyil — o, sadəcə çox sadədir.</p></details></li>
+      <li><span class="gt">Dərəcə 4. Model əyrinin <b>ümumi formasını</b> tutur, nöqtələrin kiçik sapmalarını isə yox.</span><button class="go" type="button" data-set='{"of-deg":4,"of-alpha":0}'>Göstər</button>
+        <details><summary>Bu niyə yaxşıdır?</summary><p>Nöqtələr həqiqi əyridən küylə (təsadüfi sapma ilə) götürülüb. Yaxşı model küyü yox, qanunauyğunluğu öyrənir. Train və validation xətaları kiçik və yaxındır.</p></details></li>
+      <li><span class="gt">Dərəcə 15. Əyri hər train nöqtəsinə çatmaq üçün <b>əyilib-bükülür</b>: <b>overfitting</b>.</span><button class="go" type="button" data-set='{"of-deg":15,"of-alpha":0}'>Göstər</button>
+        <details><summary>Necə tanıyım?</summary><p>Train xətası çox kiçikdir, validation xətası isə böyükdür — aralarındakı fərq böyükdür. Aşağıdakı qrafikdə çəhrayı xətt yuxarı qalxır. Bank layihəndə train 0.82, test 0.68 olmuşdu — bu, eyni problemin yüngül formasıdır.</p></details></li>
+      <li><span class="gt">Dərəcə 15-də qal, amma regularizasiyanı aç (α = 0.01). Əyri <b>hamarlaşdı</b>.</span><button class="go" type="button" data-set='{"of-deg":15,"of-alpha":5}'>Göstər</button>
+        <details><summary>Regularizasiya nə etdi?</summary><p>Ridge modelə deyir: «səhv az olsun, amma əmsalların da böyük olmasın». Əyilib-bükülmək üçün böyük əmsallar lazımdır — onlar cəzalandırıldığı üçün model sadə, hamar əyri seçir.</p></details></li>
+      <li><span class="gt">α = 10. Regularizasiya <b>həddən çox</b> güclüdür — model yenidən underfit oldu.</span><button class="go" type="button" data-set='{"of-deg":15,"of-alpha":8}'>Göstər</button>
+        <details><summary>Niyə?</summary><p>Cəza o qədər böyükdür ki, model əmsalları demək olar ki, sıfıra endirir və təxminən düz xəttə çevrilir. α da bir hiperparametrdir — onu cross-validation ilə seçirik.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li><b>Train yüksək, validation da yüksək xəta</b> → underfitting → daha mürəkkəb model və ya daha yaxşı feature-lar.</li>
+        <li><b>Train kiçik, validation böyük xəta</b> → overfitting → sadə model, regularizasiya, daha çox data.</li>
+        <li>Train xətasına baxıb qərar vermək olmaz — həmişə validation və ya cross-validation lazımdır.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
+
+model = make_pipeline(PolynomialFeatures(degree=15), StandardScaler(), Ridge(alpha=0.01))
+scores = cross_val_score(model, X, y, cv=5, scoring="neg_root_mean_squared_error")
+print(-scores.mean())   <span class="c"># validation xətasının ortası</span></pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Train accuracy 0.99, validation 0.70. Diaqnoz və həll?</summary><p><b>Overfitting.</b> Həll: modeli sadələşdir (ağac üçün <code>max_depth</code>-i azalt, <code>min_samples_leaf</code>-i artır), regularizasiya əlavə et, daha çox data topla.</p></details>
+      <details><summary>2. Train 0.60, validation 0.59. Diaqnoz?</summary><p><b>Underfitting.</b> İki nəticə yaxındır, amma ikisi də zəifdir. Daha güclü model və ya daha yaxşı feature-lar lazımdır. Diqqət: əgər datada siqnal yoxdursa (sənin ürək datasında olduğu kimi), heç bir model kömək etməyəcək.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== GINI =================== -->
+<section class="sim" id="s-gini" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 5 · Qərar ağacları</span>
+    <h2>Qərar ağacı bölgünü necə seçir: Gini</h2>
+    <p class="lead">Qərar ağacı «bəli/xeyr» sualları verir. Hər dəfə elə sual seçir ki, cavabdan sonra qruplar mümkün qədər «təmiz» olsun.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Qarışıq meyvə səbəti var: alma və armud. Bir sual verib onları iki səbətə ayırmalısan, məsələn «Çəkisi 150 qramdan azdırmı?». Yaxşı sual səbətləri təmiz edir: birində yalnız alma, o birində yalnız armud. Pis sual hər iki səbəti yenə qarışıq qoyur.</p>
+    <dl class="map">
+      <dt>Gini</dt><dd>Səbətin <b>nə qədər qarışıq</b> olduğunu ölçən rəqəm: 0 = tam təmiz, 0.5 = yarı-yarıya (iki sinif üçün ən pis hal).</dd>
+      <dt>Çəkili Gini</dt><dd>İki səbətin Gini-lərinin, <b>ölçülərinə görə</b> ortası. Böyük səbət daha çox təsir edir.</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-gini">
+    <div class="tour" data-sim="gini"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="gi-t">Sual: x ≤ <span class="mono" id="gi-tv">4.00</span> ?</label><input type="range" id="gi-t" min="50" max="850" value="400"></div>
+      <div class="btns"><button class="primary" id="gi-best" type="button">Ən yaxşı bölgünü tap</button></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--c1)"></i>Sinif A (alma)</span><span><i style="background:var(--c2);border-radius:2px"></i>Sinif B (armud)</span></div>
+    <canvas id="gi-cv" aria-label="Nöqtələr və bölgü xətti"></canvas>
+    <div class="readout" id="gi-stats"></div>
+    <canvas id="gi-cv2" aria-label="Həddə görə çəkili Gini"></canvas>
+    <div class="status info" id="gi-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Gini-ni əl ilə hesablayaq</h3>
+    <div class="formula">Gini = 1 − (A-ların payı)² − (B-lərin payı)²</div>
+    <div class="tablewrap"><table>
+      <tr><th>Səbətdə</th><th>Paylar</th><th>Hesab</th><th>Gini</th></tr>
+      <tr><td>4 A, 0 B</td><td class="n">1.00 və 0.00</td><td class="mono">1 − 1 − 0</td><td class="n">0.000</td></tr>
+      <tr><td>3 A, 1 B</td><td class="n">0.75 və 0.25</td><td class="mono">1 − 0.5625 − 0.0625</td><td class="n">0.375</td></tr>
+      <tr><td>2 A, 2 B</td><td class="n">0.50 və 0.50</td><td class="mono">1 − 0.25 − 0.25</td><td class="n">0.500</td></tr>
+    </table></div>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="gini">
+      <li><span class="gt">Həddi tam sola qoy. Bütün meyvələr sağ səbətə düşdü — sual <b>heç nəyi ayırmadı</b>.</span><button class="go" type="button" data-set='{"gi-t":50}'>Göstər</button>
+        <details><summary>Niyə Gini = 0.5?</summary><p>Sağ səbətdə 8 A və 8 B var — yarı-yarıya. 1 − 0.5² − 0.5² = 0.5. Sol səbət boşdur. Bu, «heç sual verməmək» deməkdir.</p></details></li>
+      <li><span class="gt">x ≤ 2.8. Sol səbət <b>tam təmizdir</b> (yalnız A), amma sağ səbət hələ qarışıqdır.</span><button class="go" type="button" data-set='{"gi-t":280}'>Göstər</button>
+        <details><summary>Çəkili Gini necə hesablandı?</summary><p>Sol: 5 A, 0 B → Gini 0. Sağ: 3 A, 8 B → 1 − (3/11)² − (8/11)² ≈ 0.397. Çəkili: (5/16)·0 + (11/16)·0.397 ≈ 0.273. Sağ səbət böyük olduğu üçün nəticəyə çox təsir edir.</p></details></li>
+      <li><span class="gt">Düyməni bas: alqoritm <b>bütün mümkün sualları yoxlayır</b> və ən kiçik çəkili Gini-ni seçir.</span><button class="go" type="button" data-click="gi-best">Göstər</button>
+        <details><summary>Alqoritm bunu necə edir?</summary><p>Nöqtələri sıraya düzür və hər iki qonşu nöqtənin ortasını hədd kimi yoxlayır (burada 15 variant). Ən yaxşısını seçir. Aşağıdakı əyrinin ən dərin nöqtəsi məhz budur. Sonra hər səbətin içində eyni işi təkrarlayır — ağac belə böyüyür.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>Ağac hər addımda <b>yalnız indiki</b> ən yaxşı sualı seçir, sonrakıları düşünmür (greedy).</li>
+        <li>Dayandırılmasa, hər yarpaq tam təmiz olana qədər bölür — bu, overfitting-dir. <code>max_depth</code>, <code>min_samples_leaf</code> bunun qarşısını alır.</li>
+        <li><code>feature_importances_</code> hər sütunun Gini-ni nə qədər azaltdığına əsaslanır.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">from sklearn.tree import DecisionTreeClassifier, plot_tree
+tree = DecisionTreeClassifier(criterion="gini", max_depth=3, random_state=42)
+tree.fit(X_train, y_train)
+plot_tree(tree, filled=True)   <span class="c"># hər qutuda "gini = ..." görəcəksən</span></pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. 6 A, 2 B olan səbətin Gini-si nədir?</summary><p>Paylar 0.75 və 0.25 → 1 − 0.5625 − 0.0625 = <b>0.375</b>.</p></details>
+      <details><summary>2. Yarpağın Gini-si 0-dırsa, nə deməkdir?</summary><p>Yarpaqdakı bütün nümunələr eyni sinifdəndir. Ağac bu yarpağa düşən hər nümunəyə həmin sinfi deyəcək.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== PCA =================== -->
+<section class="sim" id="s-pca" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 7 · Ölçünün azaldılması</span>
+    <h2>PCA: 2 ölçüdən 1 ölçüyə</h2>
+    <p class="lead">Hər nöqtənin iki koordinatı var. Onu bir rəqəmlə ifadə etmək istəyirik, amma nöqtələr arasındakı fərqləri mümkün qədər az itirərək.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Fənərlə bir əşyanın divara kölgəsini salırsan. Kölgə yastıdır — bir ölçü itir. Amma fənəri düzgün tutsan, kölgədən əşyanı tanımaq olur: çaynikin yandan kölgəsində qulpu da, ağzı da görünür. Pis tutsan (düz yuxarıdan), sadəcə bir dairə görürsən. PCA kölgəni ən «məlumatlı» edən istiqaməti tapır.</p>
+    <dl class="map">
+      <dt>Kölgə salmaq</dt><dd>= <b>proyeksiya</b>: hər nöqtəni oxun üzərinə «düşürmək»</dd>
+      <dt>Variasiya</dt><dd>= nöqtələrin <b>nə qədər yayıldığı</b>. Çox yayılıb = bir-birindən yaxşı fərqlənirlər.</dd>
+      <dt>PC1</dt><dd>= yayılmanın <b>ən çox</b> olduğu istiqamət; PC2 ona perpendikulyardır.</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-pca">
+    <div class="tour" data-sim="pca"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="pc-a">Oxun bucağı: <span class="mono" id="pc-av">0°</span></label><input type="range" id="pc-a" min="0" max="179" value="0"></div>
+      <div class="btns"><button class="primary" id="pc-1" type="button">PC1-i göstər</button><button id="pc-2" type="button">PC2-ni göstər</button></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--accent)"></i>orijinal nöqtələr (2 ölçü)</span><span><i class="ln" style="background:var(--warn)"></i>proyeksiya oxu</span><span><i style="background:var(--rec)"></i>kölgələr (1 ölçü)</span></div>
+    <canvas id="pc-cv" aria-label="Nöqtələr, proyeksiya oxu və proyeksiyalar"></canvas>
+    <canvas id="pc-cv2" aria-label="Proyeksiya olunmuş bir ölçülü dəyərlər"></canvas>
+    <div class="readout" id="pc-stats"></div>
+    <div class="status" id="pc-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="pca">
+      <li><span class="gt">Ox üfüqidir (0°). Sadəcə y koordinatını atdıq, yalnız x qaldı. Aşağıdakı zolağa bax — kölgələr <b>orta dərəcədə</b> yayılıb.</span><button class="go" type="button" data-set='{"pc-a":0}'>Göstər</button>
+        <details><summary>Bu niyə ideal deyil?</summary><p>Nöqtələr maili bir «buludda» düzülüb. Üfüqi ox bu buludun uzununa deyil — nöqtələrin bir hissəsi kölgədə bir-birinin üstünə düşür və fərqləri itir.</p></details></li>
+      <li><span class="gt">PC1 — buludun <b>uzununa</b> gedən ox. Kölgələr maksimum yayılıb, məlumatın təxminən 86%-i qaldı.</span><button class="go" type="button" data-click="pc-1">Göstər</button>
+        <details><summary>Niyə məhz bu istiqamət?</summary><p>Nöqtələr bu istiqamətdə ən çox fərqlənir. Kölgədə də o fərqlər qalır: iki nöqtə orijinalda uzaq idisə, kölgədə də uzaqdır. PCA riyazi olaraq bu oxu tapır (kovariasiya matrisinin məxsusi vektoru).</p></details></li>
+      <li><span class="gt">PC2 — PC1-ə perpendikulyar ox. Kölgələr <b>bir yerə yığıldı</b>, cəmi ~14% qaldı.</span><button class="go" type="button" data-click="pc-2">Göstər</button>
+        <details><summary>Bu nə deməkdir?</summary><p>PC2 buludun «eninə» gedir — orada nöqtələr az fərqlənir. Bu ox az məlumat daşıyır, ona görə 2 ölçüdən 1-ə keçəndə məhz onu atırıq.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>PCA datanı <b>ən çox yayıldığı istiqamətlərə</b> fırladır və az yayılan istiqamətləri atır.</li>
+        <li><code>explained_variance_ratio_</code> hər PC-nin saxladığı faizdir. Adətən 95% saxlanılacaq qədər PC seçilir.</li>
+        <li>PCA etiketə (y) baxmır — nəzarətsiz üsuldur. Ondan əvvəl data miqyaslanmalıdır.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">from sklearn.decomposition import PCA
+pca = PCA(n_components=0.95)        <span class="c"># variasiyanın 95%-ni saxla</span>
+X_reduced = pca.fit_transform(X_train)
+print(pca.n_components_)            <span class="c"># neçə PC lazım oldu</span>
+print(pca.explained_variance_ratio_)</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. MNIST-də 784 sütun var. PCA ilə 154 sütuna endirib variasiyanın 95%-ni saxlamaq olur. Bu nə verir?</summary><p>Data 5 dəfə kiçilir, təlim xeyli sürətlənir, məlumatın isə cəmi 5%-i itir. Çox vaxt modelin keyfiyyəti demək olar ki, dəyişmir.</p></details>
+      <details><summary>2. PCA-dan əvvəl niyə miqyaslama lazımdır?</summary><p>PCA yayılmanı ölçür. Maaş (minlərlə) və yaş (onlarla) sütununda maaşın yayılması rəqəm olaraq çox böyükdür, ona görə PC1 sadəcə «maaş» olar. Miqyaslama sütunlara bərabər şans verir.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== K-MEANS =================== -->
+<section class="sim" id="s-kmeans" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 8 · Nəzarətsiz öyrənmə</span>
+    <h2>K-means addım-addım</h2>
+    <p class="lead">Etiket yoxdur — yalnız nöqtələr. K-means oxşar nöqtələri qruplara (klasterlərə) özü ayırır.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Şəhərdə 3 pizza filialı açırsan. Əvvəlcə yerlərini təsadüfi seçirsən. Sonra hər müştəri özünə ən yaxın filialdan sifariş verir. Sonra hər filialı öz müştərilərinin tam ortasına köçürürsən. Filiallar yer dəyişdiyi üçün bəzi müştərilər üçün başqa filial daha yaxın olur — yenidən bölünürlər. Filiallar daha yerini dəyişmirsə, iş bitib.</p>
+    <dl class="map">
+      <dt>Filial</dt><dd>= <b>mərkəz (centroid)</b>, ✕ işarəsi</dd>
+      <dt>Müştəri</dt><dd>= <b>nöqtə</b>; müştərinin rəngi = hansı filiala aid olduğu</dd>
+      <dt>Inertia</dt><dd>= hər müştərinin öz filialına məsafəsinin kvadratlarının cəmi. <b>Nə qədər kiçik, o qədər yaxşı.</b></dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-kmeans">
+    <div class="tour" data-sim="kmeans"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="km-k">Klaster sayı k: <span class="mono" id="km-kv">3</span></label><input type="range" id="km-k" min="2" max="5" value="3"></div>
+      <div class="btns"><button class="primary" id="km-step" type="button">Növbəti addım</button><button id="km-run" type="button">Sona qədər</button><button id="km-new" type="button">Yeni başlanğıc</button></div>
+    </div>
+    <canvas id="km-cv" aria-label="Nöqtələr və klaster mərkəzləri"></canvas>
+    <div class="readout" id="km-stats"></div>
+    <div class="status info" id="km-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="kmeans">
+      <li><span class="gt">Başlanğıc: 3 mərkəz <b>təsadüfi</b> nöqtələrin üstünə qoyuldu. Nöqtələr hələ heç kimə aid deyil (boz).</span><button class="go" type="button" data-set='{"km-k":3}' data-call="kmeans:seed:5">Göstər</button>
+        <details><summary>Niyə təsadüfi?</summary><p>Alqoritm klasterlərin harada olduğunu bilmir — etiket yoxdur. Ona görə bir yerdən başlamalıdır. sklearn daha ağıllı başlanğıc seçir (k-means++): mərkəzləri bir-birindən uzaq qoyur.</p></details></li>
+      <li><span class="gt"><b>Təyin etmə:</b> hər nöqtə ən yaxın mərkəzin rəngini aldı.</span><button class="go" type="button" data-set='{"km-k":3}' data-call="kmeans:seed:5" data-click="km-step">Göstər</button>
+        <details><summary>«Ən yaxın» necə hesablanır?</summary><p>Adi məsafə ilə: √((x₁ − x₂)² + (y₁ − y₂)²). Real datada sütun çoxdursa, eyni düstur bütün sütunlar üzrə hesablanır — ona görə k-means-dən əvvəl miqyaslama vacibdir.</p></details></li>
+      <li><span class="gt"><b>Yeniləmə:</b> hər mərkəz öz rəngindəki nöqtələrin <b>ortasına</b> köçdü (oxlar).</span><button class="go" type="button" data-set='{"km-k":3}' data-call="kmeans:seed:5" data-click="km-step,km-step">Göstər</button>
+        <details><summary>Orta necə tapılır?</summary><p>Klasterdəki bütün nöqtələrin x-lərinin ortası və y-lərinin ortası. «K-means» adındakı «means» elə «ortalar» deməkdir.</p></details></li>
+      <li><span class="gt">Bu iki addımı <b>mərkəzlər tərpənməyənə qədər</b> təkrarla.</span><button class="go" type="button" data-set='{"km-k":3}' data-call="kmeans:seed:5" data-click="km-run">Göstər</button>
+        <details><summary>Həmişə dayanırmı?</summary><p>Bəli. Hər addım inertia-nı ya azaldır, ya da eyni saxlayır, və mümkün bölgülərin sayı sonludur. Amma tapılan nəticə həmişə ən yaxşısı olmaya bilər — başlanğıcdan asılıdır.</p></details></li>
+      <li><span class="gt">k = 5 seç və sona qədər işlət. Inertia <b>azaldı</b>, amma klasterlər daha mənalı oldumu?</span><button class="go" type="button" data-set='{"km-k":5}' data-call="kmeans:seed:5" data-click="km-run">Göstər</button>
+        <details><summary>Bəs düzgün k-nı necə seçək?</summary><p>k artdıqca inertia həmişə azalır (k = nöqtə sayı olsa, 0 olar). Ona görə ən kiçik inertia-ya baxmırıq. «Elbow» üsulu: inertia-nın azalmasının birdən yavaşladığı k-nı seçirik. Silhouette score isə klasterlərin nə qədər yaxşı ayrıldığını birbaşa ölçür.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>K-means iki addımı təkrarlayır: <b>ən yaxına ver</b> → <b>ortaya köçür</b>.</li>
+        <li>Nəticə başlanğıcdan asılıdır, ona görə sklearn onu bir neçə dəfə işlədir (<code>n_init</code>) və ən yaxşısını saxlayır.</li>
+        <li>k-nı sən seçirsən. Klasterlər dəyirmi və təxminən eyni ölçüdə olanda k-means ən yaxşı işləyir.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">from sklearn.cluster import KMeans
+km = KMeans(n_clusters=3, n_init=10, random_state=42)
+labels = km.fit_predict(X)     <span class="c"># hər nöqtənin klaster nömrəsi</span>
+km.cluster_centers_            <span class="c"># mərkəzlərin koordinatları</span>
+km.inertia_</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. K-means-in classification-dan əsas fərqi nədir?</summary><p>Classification-da model düzgün cavabları (etiketləri) görür və onları təkrarlamağı öyrənir. K-means-də etiket yoxdur — qrupları datanın öz quruluşundan tapır.</p></details>
+      <details><summary>2. «Yeni başlanğıc»-ı bir neçə dəfə bas və «Sona qədər» et. Həmişə eyni nəticə alınırmı?</summary><p>Çox vaxt bəli, amma bəzən iki mərkəz bir klasterə düşür və başqa bir klaster ikiyə bölünür. Belə nəticənin inertia-sı daha böyük olur. <code>n_init=10</code> bu riski azaldır.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== BACKPROP =================== -->
+<section class="sim" id="s-backprop" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 9 · Əlavə A · Reverse-mode autodiff</span>
+    <h2>Backpropagation addım-addım</h2>
+    <p class="lead">Neyron şəbəkə səhv edəndə hər çəkinin bu səhvdə «payı» nə qədərdir? Backprop bunu sondan əvvələ doğru hesablayır.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Zavodda məhsul bir neçə dəzgahdan keçir və sonda qüsurlu çıxır. Hər dəzgahın günahı nə qədərdir? Sondan başlayırsan: son dəzgah öz payını hesablayır və qalan «günahı» özündən əvvəlki dəzgahlara ötürür. Onlar da öz paylarını hesablayıb daha əvvələ ötürür. Bir dəfə geri gəzməklə hamının payı bilinir.</p>
+    <dl class="map">
+      <dt>Dəzgah</dt><dd>= qrafdakı <b>düyün</b> (×, + əməliyyatı)</dd>
+      <dt>Günah payı</dt><dd>= <b>qradiyent ∂f/∂düyün</b>. Məs. ∂f/∂x = 24 o deməkdir ki, x 0.01 artsa, f təxminən 0.24 artar.</dd>
+      <dt>Payı ötürmək</dt><dd>= <b>zəncir qaydası</b>: qradiyentlər yol boyu vurulur.</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-backprop">
+    <div class="tour" data-sim="backprop"></div>
+    <div class="btns"><button id="bp-prev" type="button">← Geri</button><button class="primary" id="bp-next" type="button">İrəli →</button><button id="bp-reset" type="button">Əvvələ</button><span class="mono" id="bp-count" style="color:var(--muted)"></span></div>
+    <div class="legend"><span><i class="ln" style="background:var(--ink)"></i>dəyər (irəli keçid)</span><span><i class="ln" style="background:var(--rec)"></i>∂f/∂düyün (geri keçid)</span><span><i style="background:var(--warn)"></i>indiki addım</span></div>
+    <canvas id="bp-cv" aria-label="Hesablama qrafı"></canvas>
+    <div class="status info" id="bp-msg"></div>
+  </div>
+  <div class="explain">
+    <p>Funksiya: <span class="mono">f(x, y) = x²y + y + 2</span>, nöqtə: x = 3, y = 4. Kompüter bunu kiçik əməliyyatlara bölür: əvvəl x·x, sonra onu y-ə vurur, ayrıca y + 2, sonda ikisini toplayır. Hər əməliyyat qrafda bir düyündür.</p>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="backprop">
+      <li><span class="gt"><b>İrəli keçid</b> bitdi: aşağıdan yuxarı hər düyünün dəyəri hesablandı, f = 42.</span><button class="go" type="button" data-call="backprop:go:4">Göstər</button>
+        <details><summary>Dəyərlər niyə yadda saxlanılır?</summary><p>Geri keçiddə vurma düyününün qradiyenti üçün «o biri» vuruğun dəyəri lazımdır. Məsələn, n5 = n4·y üçün ∂n5/∂n4 = y = 4. Bu dəyərləri yenidən hesablamamaq üçün yaddaşda saxlayırıq — ona görə təlim çox yaddaş tələb edir.</p></details></li>
+      <li><span class="gt">Geri keçid başladı. <b>Toplama</b> düyünü qradiyenti dəyişmədən hər iki girişə ötürdü.</span><button class="go" type="button" data-call="backprop:go:6">Göstər</button>
+        <details><summary>Niyə dəyişmədən?</summary><p>n7 = n5 + n6. n5 bir vahid artsa, n7 də düz bir vahid artır. Deməli ∂n7/∂n5 = 1, və 1 × (gələn qradiyent) = gələn qradiyent.</p></details></li>
+      <li><span class="gt"><b>Vurma</b> düyünü: qradiyent «o biri» vuruğa vurularaq ötürüldü.</span><button class="go" type="button" data-call="backprop:go:7">Göstər</button>
+        <details><summary>Niyə o biri vuruğa?</summary><p>n5 = n4 · y = n4 · 4. n4 bir vahid artsa, n5 dörd vahid artır. Deməli ∂n5/∂n4 = 4 = y. Ümumi qayda: a·b-də a-nın qradiyenti b-dir, b-ninki a-dır.</p></details></li>
+      <li><span class="gt">y <b>iki yerdə</b> işlənib — ona gələn iki qradiyent toplandı: 9 + 1 = 10.</span><button class="go" type="button" data-call="backprop:go:8">Göstər</button>
+        <details><summary>Niyə toplanır?</summary><p>y dəyişəndə f iki yoldan dəyişir: n5 vasitəsilə və n6 vasitəsilə. Ümumi təsir iki təsirin cəmidir. Neyron şəbəkədə bir neyronun çıxışı növbəti qatın bütün neyronlarına gedir — orada da qradiyentlər belə toplanır.</p></details></li>
+      <li><span class="gt">Hazırdır: ∂f/∂x = 24, ∂f/∂y = 10. <b>Cəmi iki keçid</b> kifayət etdi.</span><button class="go" type="button" data-call="backprop:go:10">Göstər</button>
+        <details><summary>Bunun neyron şəbəkəyə nə aidiyyəti var?</summary><p>Şəbəkədə x və y yerinə milyonlarla çəki, f yerinə loss var. Qayda eynidir: bir irəli keçid loss-u hesablayır, bir geri keçid bütün çəkilərin qradiyentini verir. Sonra gradient descent hər çəkini qradiyentinin əksinə dəyişir.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li><b>Toplama</b> qradiyenti olduğu kimi ötürür, <b>vurma</b> onu o biri vuruğa vurur, bir dəyişən bir neçə yerdə işlənibsə qradiyentlər <b>toplanır</b>.</li>
+        <li>Backprop = irəli keçid (dəyərlər) + geri keçid (zəncir qaydası ilə qradiyentlər).</li>
+        <li>PyTorch-da <code>loss.backward()</code> bunu avtomatik edir.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">import torch
+x = torch.tensor(3.0, requires_grad=True)
+y = torch.tensor(4.0, requires_grad=True)
+f = x**2 * y + y + 2      <span class="c"># irəli keçid: qraf qurulur, f = 42</span>
+f.backward()              <span class="c"># geri keçid</span>
+print(x.grad, y.grad)     <span class="c"># tensor(24.) tensor(10.)</span></pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. x = 1, y = 2 olsaydı, ∂f/∂x nə olardı?</summary><p>∂f/∂x = 2xy = 2·1·2 = <b>4</b>. Qrafla: ∂f/∂n4 = y = 2, ∂n4/∂x = 2x = 2, cəmi 2·2 = 4.</p></details>
+      <details><summary>2. Niyə «geri» gedirik, «irəli» yox?</summary><p>Çünki loss tək bir rəqəmdir, çəkilər isə çoxdur. Sondan başlasaq, bir keçiddə bütün çəkilərin qradiyentini alırıq. İrəlidən getsəydik, hər çəki üçün ayrıca keçid lazım olardı (forward-mode).</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== VANISHING =================== -->
+<section class="sim" id="s-vanishing" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 11 · Dərin şəbəkələrin təlimi</span>
+    <h2>Yox olan və partlayan qradiyentlər</h2>
+    <p class="lead">Şəbəkə çox dərin olanda qradiyent çıxışdan girişə gedərkən ya sönür, ya da partlayır. Nəticədə ilk qatlar öyrənmir.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>«Xarab telefon» oyunu: 12 nəfər sıraya düzülüb, hər biri eşitdiyini növbətiyə pıçıldayır. Hər kəs səsin yalnız dörddə birini ötürsə, sonuncunun dediyi əvvələ çatanda heç eşidilmir. Əksinə, hər kəs iki dəfə ucadan desə, əvvələ qışqırıq çatır. Hamı eyni səslə ötürəndə isə mesaj sağ-salamat çatır.</p>
+    <dl class="map">
+      <dt>Sıradakı adam</dt><dd>= şəbəkənin <b>qatı</b></dd>
+      <dt>Mesaj</dt><dd>= <b>qradiyent</b> (çəkini nə qədər dəyişmək lazım olduğu)</dd>
+      <dt>Ötürmə gücü</dt><dd>= hər qatdakı vurma faktoru: <b>çəki × aktivləşdirmənin törəməsi</b></dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-vanishing">
+    <div class="tour" data-sim="vanishing"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="vg-act">Aktivləşdirmə funksiyası</label>
+        <select id="vg-act"><option value="0.25">Sigmoid — törəmə ən çoxu 0.25</option><option value="0.65">Tanh — tipik törəmə ~0.65</option><option value="1">ReLU — aktiv neyronda törəmə 1</option></select></div>
+      <div class="ctrl"><label for="vg-L">Qat sayı: <span class="mono" id="vg-Lv">12</span></label><input type="range" id="vg-L" min="2" max="30" value="12"></div>
+      <div class="ctrl"><label for="vg-w">Çəkilərin tipik ölçüsü w: <span class="mono" id="vg-wv">1.0</span></label><input type="range" id="vg-w" min="5" max="40" value="10"></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--good);border-radius:2px"></i>sağlam qradiyent</span><span><i style="background:var(--bad);border-radius:2px"></i>sönmüş (&lt; 0.001)</span><span><i style="background:var(--warn);border-radius:2px"></i>partlamış (&gt; 1000)</span></div>
+    <canvas id="vg-cv" aria-label="Qatlara görə qradiyentin ölçüsü, loqarifmik şkala"></canvas>
+    <div class="readout" id="vg-stats"></div>
+    <div class="status" id="vg-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Qrafiki necə oxumalı</h3>
+    <p>Hər sütun bir qatdır: solda girişə yaxın, sağda çıxışa yaxın qatlar. Qradiyent sağdan sola axır. Şkala loqarifmikdir: hər üfüqi xətt <b>10 dəfə</b> fərq deməkdir. Kəsik xətt = 1 (heç sönməyib, heç partlamayıb).</p>
+    <p>Hesab sadədir: sigmoid-in törəməsi ən çoxu 0.25-dir. 3 qatdan sonra 0.25 × 0.25 × 0.25 ≈ 0.016, 10 qatdan sonra ≈ 0.000001.</p>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="vanishing">
+      <li><span class="gt">Sigmoid, 5 qat. Qradiyent sola getdikcə <b>azalır</b>, amma hələ tamamilə sönməyib.</span><button class="go" type="button" data-set='{"vg-act":"0.25","vg-L":5,"vg-w":10}'>Göstər</button>
+        <details><summary>Rəqəmlə</summary><p>1-ci qat: 0.25⁴ ≈ 0.004. Yəni 1-ci qat çıxış qatından 250 dəfə yavaş öyrənir.</p></details></li>
+      <li><span class="gt">Sigmoid, 20 qat. İlk qatların qradiyenti <b>praktiki olaraq sıfırdır</b> — onlar öyrənmir.</span><button class="go" type="button" data-set='{"vg-act":"0.25","vg-L":20,"vg-w":10}'>Göstər</button>
+        <details><summary>Bu niyə problemdir?</summary><p>İlk qatlar şəbəkənin «gözləridir» — sadə xüsusiyyətləri (kənarlar, formalar) tanıyır. Onlar öyrənmirsə, qalan qatlar təsadüfi xüsusiyyətlərlə işləyir. 2010-a qədər dərin şəbəkələrin pis öyrənməsinin əsas səbəblərindən biri bu idi.</p></details></li>
+      <li><span class="gt">ReLU, 20 qat. Aktiv neyronda törəmə 1-dir, qradiyent <b>bütün qatlardan</b> keçir.</span><button class="go" type="button" data-set='{"vg-act":"1","vg-L":20,"vg-w":10}'>Göstər</button>
+        <details><summary>ReLU-nun da problemi varmı?</summary><p>Bəli: mənfi girişdə törəməsi 0-dır. Neyron həmişə mənfi giriş alırsa, «ölür» və heç vaxt öyrənmir. LeakyReLU, ELU, GELU bunun üçün icad edilib.</p></details></li>
+      <li><span class="gt">ReLU, amma çəkilər bir az böyükdür (w = 1.3). Qradiyent <b>partlayır</b>.</span><button class="go" type="button" data-set='{"vg-act":"1","vg-L":30,"vg-w":13}'>Göstər</button>
+        <details><summary>Həll nədir?</summary><p>Çəkiləri düzgün ölçüdə başlatmaq (He / Glorot inisializasiyası), Batch Normalization və gradient clipping — qradiyent müəyyən həddən böyük olanda onu kəsmək.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>Hər qat qradiyenti təxminən <b>w × f′</b> ilə vurur. Bu faktor 1-dən kiçikdirsə sönür, böyükdürsə partlayır.</li>
+        <li>Həllər: ReLU ailəsi, He/Glorot inisializasiyası, Batch Norm, gradient clipping, residual bağlantılar (ResNet).</li>
+        <li>Bu, sadələşdirilmiş modeldir — real şəbəkədə hər neyronun faktoru fərqlidir, amma mənzərə eynidir.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">import torch.nn as nn
+layer = nn.Linear(256, 256)
+nn.init.kaiming_normal_(layer.weight, nonlinearity="relu")   <span class="c"># He inisializasiyası</span>
+model = nn.Sequential(layer, nn.BatchNorm1d(256), nn.ReLU(), ...)
+
+loss.backward()
+nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  <span class="c"># gradient clipping</span>
+optimizer.step()</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Niyə ən az məhz ilk qatlar öyrənir, son qatlar yox?</summary><p>Qradiyent sondan başlayır. Son qata az vurma ilə, ilk qata isə bütün qatların faktorları vurularaq çatır. Ən uzun yol ilk qatlarındır.</p></details>
+      <details><summary>2. ResNet-in «residual» bağlantısı necə kömək edir?</summary><p>Girişi qatın çıxışına birbaşa əlavə edir (x + F(x)). Toplama qradiyenti dəyişmədən ötürdüyü üçün (backprop-dakı qayda!) qradiyent qatları «keçib» birbaşa irəli gedə bilir.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CONV =================== -->
+<section class="sim" id="s-conv" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 12 · Konvolyusiya şəbəkələri</span>
+    <h2>Konvolyusiya və pooling</h2>
+    <p class="lead">CNN şəkli bütöv görmür — kiçik pəncərə ilə hissə-hissə «oxuyur» və hər yerdə eyni sualı verir.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Böyüdücü şüşə ilə şəklin üzərində sətir-sətir gəzirsən. Şüşə hər dəfə 3×3 kiçik sahə görür və bir sual verir: «Burada şaquli xətt varmı?» Cavab bir rəqəmdir: böyük müsbət — bəli, sıfır — yox. Bütün cavabları yan-yana düzəndə yeni «şəkil» alınır: harada şaquli xətt olduğunu göstərən xəritə.</p>
+    <dl class="map">
+      <dt>Böyüdücü şüşə</dt><dd>= <b>filtr (kernel)</b>: 3×3 çəki cədvəli</dd>
+      <dt>Cavablar xəritəsi</dt><dd>= <b>feature map</b></dd>
+      <dt>Pooling</dt><dd>= xəritəni kiçiltmək: hər 2×2 blokdan <b>ən güclü cavabı</b> saxlamaq</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-conv">
+    <div class="tour" data-sim="conv"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="cv-k">Filtr</label>
+        <select id="cv-k"><option value="v">Şaquli kənar (Sobel)</option><option value="h">Üfüqi kənar (Sobel)</option><option value="b">Bulanıqlaşdırma (orta)</option><option value="s">Kəskinləşdirmə</option></select></div>
+      <div class="ctrl"><label for="cv-pos">Filtrin mövqeyi: <span class="mono" id="cv-posv"></span></label><input type="range" id="cv-pos" min="0" max="63" value="9"></div>
+      <div class="btns"><button class="primary" id="cv-play" type="button">▶ Sürüşdür</button><button id="cv-clear" type="button">Şəkli təmizlə</button><button id="cv-def" type="button">Nümunə şəkil</button></div>
+    </div>
+    <div class="convrow">
+      <div class="gridbox"><span class="cap">Giriş 10×10 · xanaya toxunaraq çək</span><div class="grid" id="cv-in" style="grid-template-columns:repeat(10,auto)"></div></div>
+      <div class="gridbox"><span class="cap">Filtr × piksel</span><div class="kern" id="cv-kern"></div><span class="cap" id="cv-sum"></span></div>
+      <div class="gridbox"><span class="cap">Feature map 8×8</span><div class="grid" id="cv-out" style="grid-template-columns:repeat(8,auto)"></div></div>
+      <div class="gridbox"><span class="cap">Max pooling 2×2 → 4×4</span><div class="grid" id="cv-pool" style="grid-template-columns:repeat(4,auto)"></div></div>
+    </div>
+    <div class="status info" id="cv-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Bir xananı əl ilə hesablayaq</h3>
+    <p>Qara piksel = 1, ağ = 0. Filtrin 9 çəkisi pəncərədəki 9 pikselə vurulur və toplanır. Şaquli kənar filtrində sol sütunun çəkiləri mənfi (−1, −2, −1), sağ sütununki müsbətdir (+1, +2, +1). Xətt pəncərənin sağ sütunundadırsa: 1 + 2 + 1 = <b>+4</b>. Sol sütunundadırsa: <b>−4</b>. Ortadadırsa (çəkilər 0): <b>0</b>.</p>
+    <p>Feature map-də <span style="color:var(--accent)">göy</span> = müsbət cavab, <span style="color:var(--rec)">çəhrayı</span> = mənfi cavab, boz = sıfır.</p>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="conv">
+      <li><span class="gt">Şəkildə tək şaquli xətt var. Xətt pəncərənin <b>sağ</b> sütunundadır → cavab <b>+4</b>.</span><button class="go" type="button" data-set='{"cv-k":"v","cv-pos":19}' data-call="conv:img:vline">Göstər</button>
+        <details><summary>Niyə +4?</summary><p>Sağ sütunun çəkiləri +1, +2, +1. Üçü də qara piksellə (1) üst-üstə düşür: 1·1 + 2·1 + 1·1 = 4. Sol sütundakı piksellər ağdır (0), mənfi çəkilər heç nə çıxmır.</p></details></li>
+      <li><span class="gt">Pəncərəni bir xana sağa çək — xətt ortaya düşdü → cavab <b>0</b>.</span><button class="go" type="button" data-set='{"cv-k":"v","cv-pos":20}' data-call="conv:img:vline">Göstər</button>
+        <details><summary>Bəs xətt var axı?</summary><p>Bu filtr xəttin özünü yox, <b>kənarı</b> axtarır — sol və sağ tərəfin fərqini. Xətt ortadadırsa, sol və sağ eynidir (ikisi də ağ), fərq yoxdur.</p></details></li>
+      <li><span class="gt">Daha bir xana sağa — xətt pəncərənin <b>sol</b> sütunundadır → cavab <b>−4</b>.</span><button class="go" type="button" data-set='{"cv-k":"v","cv-pos":21}' data-call="conv:img:vline">Göstər</button>
+        <details><summary>Mənfi nə deməkdir?</summary><p>«Qaranlıqdan işığa» yox, «işıqdan qaranlığa» keçid. Feature map-də xəttin iki tərəfində göy və çəhrayı zolaq görünür — xəttin hər iki kənarı tapıldı.</p></details></li>
+      <li><span class="gt">Eyni şəkil, <b>üfüqi</b> kənar filtri. Xəttin ortasında cavab 0-dır — yalnız uclarında bir az cavab var.</span><button class="go" type="button" data-set='{"cv-k":"h","cv-pos":20}' data-call="conv:img:vline">Göstər</button>
+        <details><summary>Niyə?</summary><p>Üfüqi filtr yuxarı və aşağı tərəfin fərqini axtarır. Şaquli xəttin ortasında yuxarı ilə aşağı eynidir — cavab 0. Yalnız xəttin başladığı və bitdiyi yerdə (yuxarı-aşağı fərq olan yerdə) cavab var. Hər filtr yalnız «öz» xüsusiyyətini görür. CNN-də bir qatda onlarla fərqli filtr olur.</p></details></li>
+      <li><span class="gt">Nümunə şəkil (7 rəqəmi), şaquli filtr — filtr şəkil üzərində <b>özü sürüşür</b>. Pooling-ə də bax.</span><button class="go" type="button" data-set='{"cv-k":"v","cv-pos":0}' data-call="conv:img:def;conv:play:1">Göstər</button>
+        <details><summary>Pooling nə etdi?</summary><p>8×8 xəritəni 4×4-ə kiçiltdi: hər 2×2 blokdan ən böyük cavabı saxladı. «Burada təxminən kənar var» məlumatı qaldı, dəqiq yeri isə bir az itdi. Bu, şəbəkəni kiçik sürüşmələrə qarşı davamlı edir və hesablamanı azaldır.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>Filtr = 3×3 çəki. Hər mövqedə: 9 vurma + toplama = feature map-in bir xanası.</li>
+        <li>Burada filtrləri biz yazdıq. CNN-də isə filtrlərin çəkiləri <b>backprop ilə öyrənilir</b>: ilk qatlar kənarları, dərin qatlar göz, təkər, hərf kimi formaları tanıyır.</li>
+        <li>Eyni filtr bütün şəklə tətbiq olunur — ona görə parametr sayı çox azdır.</li>
+        <li>Padding olmadan, stride 1: çıxış ölçüsü = giriş − filtr + 1 (10 − 3 + 1 = 8).</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">import torch.nn as nn
+model = nn.Sequential(
+    nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3),  <span class="c"># 32 fərqli filtr</span>
+    nn.ReLU(),
+    nn.MaxPool2d(kernel_size=2),                               <span class="c"># ölçünü yarıya endir</span>
+)</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. 28×28 şəkil, 3×3 filtr, padding yox, stride 1. Çıxış ölçüsü? Sonra 2×2 max pooling?</summary><p>28 − 3 + 1 = <b>26×26</b>. Pooling-dən sonra <b>13×13</b>.</p></details>
+      <details><summary>2. Kəskinləşdirmə filtrinin çəkilərinin cəmi nədir və bu nə deməkdir?</summary><p>5 − 1 − 1 − 1 − 1 = <b>1</b>. Düz, eyni rəngli sahədə nəticə pikselin özünə bərabərdir — şəkil dəyişmir. Yalnız qonşulardan fərqli piksellər daha da fərqli olur, yəni kənarlar kəskinləşir.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- =================== ATTENTION =================== -->
+<section class="sim" id="s-attention" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Fəsil 14–15 · Attention və Transformer-lər</span>
+    <h2>Attention: söz kimə «baxır»?</h2>
+    <p class="lead">«Pişik südü içdi çünki o ac idi». Model «o» sözünü oxuyanda bilməlidir ki, «o» pişikdir, süd yox. Attention hər sözə cümlənin digər sözlərindən lazım olan məlumatı götürməyə imkan verir.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>Kitabxanada sual verirsən: «pişiklər haqqında nə var?». Hər kitabın üz qabığında etiket var. Sualını etiketlərlə müqayisə edirsən — «Ev heyvanları» etiketi çox uyğundur, «Kimya» heç uyğun deyil. Sonra uyğunluğa görə vaxtını bölürsən: ən uyğun kitabdan çox, digərlərindən az oxuyursan. Topladığın məlumat əsasən uyğun kitablardan gəlir.</p>
+    <dl class="map">
+      <dt>Sənin sualın</dt><dd>= <b>Query (Q)</b>: «nə axtarıram?»</dd>
+      <dt>Kitabın etiketi</dt><dd>= <b>Key (K)</b>: «məndə nə var?»</dd>
+      <dt>Kitabın məzmunu</dt><dd>= <b>Value (V)</b>: «verəcəyim məlumat»</dd>
+      <dt>Vaxtın bölgüsü</dt><dd>= <b>attention çəkiləri</b> (cəmi həmişə 100%)</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-attention">
+    <div class="tour" data-sim="attention"></div>
+    <p style="font-size:.92rem;color:var(--muted)">Bir sözə toxun — o «sual verən» (query) olacaq. Digər sözlərin rəngi ona verilən diqqəti göstərir.</p>
+    <div class="toks" id="at-toks" role="group" aria-label="Cümlənin sözləri"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="at-T">Temperatur (√d rolunu oynayır): <span class="mono" id="at-Tv">1.00</span></label><input type="range" id="at-T" min="15" max="300" value="100"></div>
+    </div>
+    <div class="tablewrap"><table id="at-tab"></table></div>
+    <div class="status info" id="at-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Softmax-ı əl ilə hesablayaq</h3>
+    <p>Fərz et ki, üç sözün xalları 2, 1 və 0-dır. Softmax xalları faizə çevirir:</p>
+    <div class="tablewrap"><table>
+      <tr><th>Xal</th><th>e^xal</th><th>÷ cəm (11.1)</th></tr>
+      <tr><td class="n">2</td><td class="n">7.39</td><td class="n">67%</td></tr>
+      <tr><td class="n">1</td><td class="n">2.72</td><td class="n">24%</td></tr>
+      <tr><td class="n">0</td><td class="n">1.00</td><td class="n">9%</td></tr>
+    </table></div>
+    <p>e^ (eksponent) iki iş görür: hər şeyi müsbət edir və böyük xalı daha da gücləndirir. Simulyatordakı cədvəl bu hesabı bütün sözlər üçün canlı göstərir. Xallar burada izah üçün əl ilə seçilib; real modeldə onlar Q və K vektorlarının skalyar hasilidir və təlim zamanı öyrənilir.</p>
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="attention">
+      <li><span class="gt">Query = «o». Diqqətin böyük hissəsi <b>«Pişik»</b>-ə gedir.</span><button class="go" type="button" data-set='{"at-T":100}' data-call="attention:setQ:4">Göstər</button>
+        <details><summary>Bu nə verir?</summary><p>«o» sözünün yeni təsviri digər sözlərin Value-larının çəkili cəmidir. Çəkinin çoxu «Pişik»-də olduğu üçün «o»-nun yeni təsviri əsasən pişik haqqında məlumat daşıyır. Sonrakı qatlar artıq «o»-nu pişik kimi «görür».</p></details></li>
+      <li><span class="gt">Query = «ac». Diqqət <b>«Pişik» və «o»</b> arasında bölünür — kimin ac olduğunu bu sözlər deyir.</span><button class="go" type="button" data-set='{"at-T":100}' data-call="attention:setQ:5">Göstər</button>
+        <details><summary>Niyə iki sözə?</summary><p>Hər söz bir neçə sözdən məlumat yığa bilər. Məhz bu, attention-u RNN-dən güclü edir: «ac» cümlənin əvvəlindəki «Pişik»-ə də birbaşa baxa bilir, məsafənin fərqi yoxdur.</p></details></li>
+      <li><span class="gt">Temperatur aşağı (0.2). Softmax <b>«hamısı bir sözə»</b> deyir.</span><button class="go" type="button" data-set='{"at-T":20}' data-call="attention:setQ:4">Göstər</button>
+        <details><summary>Niyə?</summary><p>Xallar kiçik ədədə bölünəndə aralarındakı fərq böyüyür (2.8 ÷ 0.2 = 14, 1.4 ÷ 0.2 = 7). e^ bu fərqi daha da şişirdir — qalib hər şeyi götürür.</p></details></li>
+      <li><span class="gt">Temperatur yuxarı (3). Diqqət demək olar ki, <b>bərabər</b> paylanır — fərqlər itir.</span><button class="go" type="button" data-set='{"at-T":300}' data-call="attention:setQ:4">Göstər</button>
+        <details><summary>Transformer-də √d nə üçündür?</summary><p>Q və K vektorları uzun olanda (məs. 64 ədəd), skalyar hasil çox böyük rəqəmlər verir və softmax 3-cü addımdakı kimi «hamısı bir sözə» olur — qradiyentlər sönür. √d-yə bölmək xalları normal ölçüdə saxlayır.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <div class="formula">Attention(Q, K, V) = softmax(Q · Kᵀ ÷ √d) · V</div>
+      <ul>
+        <li><b>Q · K</b> — uyğunluq xalı; <b>softmax</b> — faizə çevirmək; <b>· V</b> — məlumatı bu faizlərlə qarışdırmaq.</li>
+        <li>Hər söz cümlənin hər sözünə birbaşa baxır — RNN kimi söz-söz ötürmə lazım deyil, uzaq sözlər «unudulmur».</li>
+        <li><b>Multi-head attention</b>: eyni iş paralel bir neçə dəfə görülür — bir başlıq «kim?», digəri «nə vaxt?» kimi fərqli əlaqələri izləyə bilər.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">import torch.nn as nn, torch.nn.functional as F
+attn = nn.MultiheadAttention(embed_dim=512, num_heads=8, batch_first=True)
+out, weights = attn(query=x, key=x, value=x)   <span class="c"># self-attention</span>
+
+<span class="c"># və ya birbaşa düstur</span>
+out = F.scaled_dot_product_attention(Q, K, V)</pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Bir sözün attention çəkilərinin cəmi niyə həmişə 100%-dir?</summary><p>Çünki softmax hər e^xal-ı onların cəminə bölür. Bu, diqqətin «büdcəsidir»: bir sözə çox versən, digərlərinə az qalır.</p></details>
+      <details><summary>2. «Self-attention»-da Q, K və V haradan gəlir?</summary><p>Üçü də eyni cümlədən: hər sözün vektoru üç fərqli öyrənilən matrisə vurulur və Q, K, V alınır. Ona görə «self» — cümlə özü-özünə baxır. Tərcümədə (cross-attention) isə Q hədəf dildən, K və V mənbə dildən gəlir.</p></details>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim();
+const MONO = '11px "IBM Plex Mono", ui-monospace, monospace';
+const BODY = '13px "IBM Plex Sans", system-ui, sans-serif';
+const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(r){ let u=0,v=0; while(!u)u=r(); while(!v)v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function fit(cv, aspect, minH, maxH){
+  const dpr = window.devicePixelRatio||1, w = cv.clientWidth||640;
+  let h = Math.round(w*aspect); if(minH) h=Math.max(h,minH); if(maxH) h=Math.min(h,maxH);
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); cv.style.height = h+'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+function frame(ctx,w,h,o){
+  const L=o.l??46, R=o.r??14, T=o.t??12, B=o.b??32;
+  const X = v => L + (v-o.x0)/(o.x1-o.x0)*(w-L-R);
+  const Y = v => T + (1-(v-o.y0)/(o.y1-o.y0))*(h-T-B);
+  ctx.lineWidth=1; ctx.font=MONO; ctx.fillStyle=css('muted'); ctx.strokeStyle=css('line');
+  (o.yt||[]).forEach(v=>{ ctx.beginPath(); ctx.moveTo(L,Y(v)); ctx.lineTo(w-R,Y(v)); ctx.stroke(); ctx.textAlign='right'; ctx.fillText(o.yf?o.yf(v):String(v), L-6, Y(v)+4); });
+  (o.xt||[]).forEach(v=>{ ctx.textAlign='center'; ctx.fillText(o.xf?o.xf(v):String(v), X(v), h-B+16); });
+  if(o.xl){ ctx.textAlign='center'; ctx.fillText(o.xl, L+(w-L-R)/2, h-3); }
+  if(o.yl){ ctx.save(); ctx.translate(11, T+(h-T-B)/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.fillText(o.yl,0,0); ctx.restore(); }
+  return {X,Y,L,R,T,B,clip(){ ctx.save(); ctx.beginPath(); ctx.rect(L,T,w-L-R,h-T-B); ctx.clip(); }};
+}
+function path(ctx, pts, color, lw, dash){
+  ctx.save(); ctx.strokeStyle=color; ctx.lineWidth=lw||2; ctx.lineJoin='round'; ctx.setLineDash(dash||[]);
+  ctx.beginPath(); let pen=false;
+  pts.forEach(p=>{ if(!p||!isFinite(p[1])){pen=false;return;} if(!pen){ctx.moveTo(p[0],p[1]);pen=true;} else ctx.lineTo(p[0],p[1]); });
+  ctx.stroke(); ctx.restore();
+}
+function dot(ctx,x,y,r,fill,stroke,lw){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||2;ctx.stroke();} }
+function arrow(ctx,x1,y1,x2,y2,color,lw){
+  ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=lw||1.5;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1), s=7;
+  ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-s*Math.cos(a-0.4),y2-s*Math.sin(a-0.4)); ctx.lineTo(x2-s*Math.cos(a+0.4),y2-s*Math.sin(a+0.4)); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+const fmt = (v,d=2) => (Math.abs(v)>=1e4 ? v.toExponential(1) : v.toFixed(d)).replace('-','−');
+function stats(el, items){ el.innerHTML = items.map(([k,v])=>'<div class="stat"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>').join(''); }
+function status(el, cls, html){ el.className='status '+cls; el.innerHTML=html; }
+const sims = {};
+
+/* ---------------- SCALING ---------------- */
+(function(){
+  const base=[820,950,1100,1250,1300,1480,1700,1950,2300], OUT=15000;
+  const cOut=$('sc-out'), cLog=$('sc-log');
+  function draw(){
+    const vals = base.concat(cOut.checked?[OUT]:[]);
+    const v = cLog.checked ? vals.map(Math.log) : vals.slice();
+    const n=v.length, mn=Math.min(...v), mx=Math.max(...v), mean=v.reduce((a,b)=>a+b,0)/n;
+    const std=Math.sqrt(v.reduce((a,b)=>a+(b-mean)**2,0)/n);
+    const mm=v.map(x=>(x-mn)/(mx-mn)), z=v.map(x=>(x-mean)/std);
+    const {ctx,w,h}=fit($('sc-cv'),0.5,300,380);
+    const L=20,R=20, zhi=Math.max(2.2,Math.max(...z)+0.3), rows=[
+      {lab: cLog.checked?'log(maaş)':'Orijinal maaş, AZN', d:v, lo:mn-(mx-mn)*0.06, hi:mx+(mx-mn)*0.06, ticks:[mn,mx], tf:x=>cLog.checked?x.toFixed(2):Math.round(x).toString()},
+      {lab:'Min-max → [0, 1]', d:mm, lo:-0.06, hi:1.06, ticks:[0,0.5,1], tf:x=>x.toFixed(1)},
+      {lab:'Standartlaşdırma → z = (x − orta) ÷ std', d:z, lo:Math.min(-2.2,Math.min(...z)-0.3), hi:zhi, ticks:[-2,-1,0,1,2,3].filter(t=>t<=zhi), tf:x=>String(x).replace('-','−')}
+    ];
+    const rh=h/3;
+    rows.forEach((r,i)=>{
+      const y0=i*rh, ly=y0+rh*0.55, X=x=>L+(x-r.lo)/(r.hi-r.lo)*(w-L-R);
+      ctx.font=BODY; ctx.fillStyle=css('ink'); ctx.textAlign='left'; ctx.fillText(r.lab,L,y0+20);
+      ctx.strokeStyle=css('line'); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(L,ly); ctx.lineTo(w-R,ly); ctx.stroke();
+      ctx.font=MONO; ctx.fillStyle=css('muted'); ctx.textAlign='center';
+      r.ticks.forEach(t=>{ ctx.beginPath(); ctx.moveTo(X(t),ly-5); ctx.lineTo(X(t),ly+5); ctx.strokeStyle=css('muted'); ctx.lineWidth=1; ctx.stroke(); ctx.fillText(r.tf(t),X(t),ly+20); });
+      r.d.forEach((x,j)=>{ const isOut = cOut.checked && j===n-1; dot(ctx,X(x),ly,isOut?7:5.5, isOut?css('bad'):css('accent'), css('surface'),1.5); });
+      if(cOut.checked){
+        const normals=r.d.slice(0,n-1), a=Math.min(...normals), b=Math.max(...normals);
+        ctx.strokeStyle=css('warn'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(X(a),ly-14); ctx.lineTo(X(b),ly-14); ctx.stroke();
+        ctx.fillStyle=css('warn'); ctx.textAlign='left'; ctx.fillText('9 normal dəyər: '+fmt(a,2)+' … '+fmt(b,2), Math.max(L,Math.min(X(a), w-R-190)), ly-20);
+      }
+    });
+    stats($('sc-stats'),[['min',fmt(mn,cLog.checked?2:0)],['max',fmt(mx,cLog.checked?2:0)],['orta',fmt(mean,cLog.checked?2:0)],['std',fmt(std,cLog.checked?2:0)]]);
+    const nm=mm.slice(0,9), nz=z.slice(0,9);
+    let msg;
+    if(!cOut.checked) msg = 'Outlier yoxdur. Min-max dəyərləri 0–1 aralığına bərabər yayır, standartlaşdırma isə ortanı 0-a, std-ni 1-ə gətirir. Hər iki üsulda nöqtələrin sırası və aralarındakı nisbət eyni qalır.';
+    else if(!cLog.checked) msg = '<b>Bir outlier hamını sıxışdırdı.</b> Min-max-da 9 normal maaş '+fmt(Math.min(...nm))+' … '+fmt(Math.max(...nm))+' aralığına düşdü — 0–1 şkalasının cəmi '+Math.round((Math.max(...nm)-Math.min(...nm))*100)+'%-i. Standartlaşdırmada onlar '+fmt(Math.min(...nz))+' … '+fmt(Math.max(...nz))+' aralığındadır, outlier isə '+fmt(z[n-1])+'-dədir. Model normal maaşları bir-birindən çətin ayıracaq.';
+    else msg = '<b>Log böyük dəyəri sıxışdırdı.</b> İndi 9 normal maaş min-max şkalasının '+Math.round((Math.max(...nm)-Math.min(...nm))*100)+'%-ni tutur və outlier digərlərindən çox da uzaq deyil (z = '+fmt(z[n-1])+'). Sağa əyri, ağır quyruqlu sütunlar üçün standart addım budur.';
+    status($('sc-msg'),'info',msg);
+  }
+  cOut.addEventListener('change',draw); cLog.addEventListener('change',draw);
+  sims.scaling={draw};
+})();
+
+/* ---------------- GRADIENT DESCENT ---------------- */
+(function(){
+  const J=t=>(t-3)**2, G=t=>2*(t-3), T0=-5;
+  let eta=0.10, path0=[T0];
+  const sl=$('gd-eta');
+  function setEta(v){ sl.value=v; eta=v/100; $('gd-etav').textContent=eta.toFixed(2); path0=[T0]; draw(); }
+  function step(n){ for(let i=0;i<n;i++){ const t=path0[path0.length-1]; if(Math.abs(t)>1e6) break; path0.push(t-eta*G(t)); } draw(); }
+  function draw(){
+    let {ctx,w,h}=fit($('gd-cv'),0.45,260,380);
+    let F=frame(ctx,w,h,{x0:-8,x1:14,y0:0,y1:125,xt:[-8,-4,0,3,6,10,14],yt:[0,25,50,75,100,125],xl:'θ (parametr)',yl:'loss J(θ)',l:56});
+    F.clip();
+    const curve=[]; for(let i=0;i<=200;i++){ const t=-8+22*i/200; curve.push([F.X(t),F.Y(J(t))]); }
+    path(ctx,curve,css('muted'),2.5);
+    dot(ctx,F.X(3),F.Y(0),5,css('good'));
+    const pts=path0.map(t=>[F.X(Math.max(-9,Math.min(15,t))),F.Y(Math.min(130,J(t)))]);
+    for(let i=1;i<pts.length;i++) arrow(ctx,pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1],css('accent'),1.5);
+    pts.forEach((p,i)=>dot(ctx,p[0],p[1],i===pts.length-1?7:4,i===pts.length-1?css('warn'):css('accent'),css('surface'),1.5));
+    ctx.restore();
+    ctx.font=MONO; ctx.fillStyle=css('good'); ctx.textAlign='center'; ctx.fillText('minimum',F.X(3),F.Y(0)-10);
+    ctx.fillStyle=css('muted'); ctx.fillText('başlanğıc',F.X(T0),F.Y(J(T0))-12);
+
+    ({ctx,w,h}=fit($('gd-cv2'),0.2,130,170));
+    const n=path0.length, maxS=Math.max(10,n-1);
+    F=frame(ctx,w,h,{x0:0,x1:maxS,y0:0,y1:70,yt:[0,35,70],xt:[0,Math.round(maxS/2),maxS],xl:'addım',yl:'loss',l:56});
+    F.clip();
+    const lp=path0.map((t,i)=>[F.X(i),F.Y(Math.min(80,J(t)))]);
+    path(ctx,lp,css('accent'),2); lp.forEach(p=>dot(ctx,p[0],p[1],3,css('accent')));
+    ctx.restore();
+
+    const t=path0[n-1], f=1-2*eta;
+    stats($('gd-stats'),[['addım',String(n-1)],['θ',fmt(t,3)],['maillik (qradiyent)',fmt(G(t),3)],['loss J(θ)',fmt(J(t),3)]]);
+    let cls,msg;
+    const need = Math.abs(f)<1e-9 ? 1 : Math.ceil(Math.log(0.01/8)/Math.log(Math.abs(f)));
+    if(n===1){cls='info';msg='Başlanğıc nöqtə θ = −5, loss = 64. «1 addım» və ya «10 addım» bas.';}
+    else if(Math.abs(eta-0.5)<1e-9){cls='good';msg='<b>η = 0.50 — bu loss üçün ideal addım.</b> θ − 0.5·2(θ − 3) = 3: bir addımda düz minimuma. Real modellərdə belə «sehrli» dəyəri əvvəlcədən bilmirik.';}
+    else if(eta<0.5){cls=eta<0.06?'warn':'good';msg=(eta<0.06?'<b>Çox yavaş.</b> ':'<b>Yığılır.</b> ')+'Hər addım minimuma doğru gedir və addımlar getdikcə qısalır. Minimuma 0.01 qədər yaxınlaşmaq üçün təxminən '+need+' addım lazımdır.';}
+    else if(eta<1){cls='warn';msg='<b>Zig-zag.</b> Addım o qədər böyükdür ki, minimumun üstündən o biri yamaca tullanır. Amma hər tullanış əvvəlkindən qısadır, ona görə yenə yığılır (~'+need+' addım).';}
+    else if(Math.abs(eta-1)<1e-9){cls='bad';msg='<b>Əbədi tullanma.</b> θ = −5 ilə θ = 11 arasında gedib-gəlir, heç vaxt yaxınlaşmır.';}
+    else {cls='bad';msg='<b>Diverge — partlayır.</b> Hər tullanış əvvəlkindən uzaqdır, loss sonsuzluğa gedir. Real təlimdə bu, loss-un NaN olması kimi görünür. Həll: learning rate-i kiçilt.';}
+    status($('gd-msg'),cls,msg);
+  }
+  sl.addEventListener('input',()=>setEta(+sl.value));
+  $('gd-step').addEventListener('click',()=>step(1));
+  $('gd-10').addEventListener('click',()=>step(10));
+  $('gd-reset').addEventListener('click',()=>{path0=[T0];draw();});
+  sims.gd={draw};
+})();
+
+/* ---------------- OVERFITTING ---------------- */
+(function(){
+  const r=rng(7), f=x=>Math.sin(2.6*x)+0.4*x, tr=[], va=[];
+  for(let i=0;i<24;i++){ const x=-1+2*r(), y=f(x)+0.25*gauss(r); (i%2?va:tr).push([x,y]); }
+  const ALPHAS=[0,1e-6,1e-5,1e-4,1e-3,1e-2,0.1,1,10];
+  function solve(A,b){ const n=b.length;
+    for(let i=0;i<n;i++){ let p=i; for(let k=i+1;k<n;k++) if(Math.abs(A[k][i])>Math.abs(A[p][i])) p=k;
+      [A[i],A[p]]=[A[p],A[i]]; [b[i],b[p]]=[b[p],b[i]]; const d=A[i][i]||1e-14;
+      for(let k=i+1;k<n;k++){ const q=A[k][i]/d; for(let c=i;c<n;c++) A[k][c]-=q*A[i][c]; b[k]-=q*b[i]; } }
+    const x=new Array(n).fill(0); for(let i=n-1;i>=0;i--){ let s=b[i]; for(let c=i+1;c<n;c++) s-=A[i][c]*x[c]; x[i]=s/(A[i][i]||1e-14); } return x; }
+  function fitPoly(d,a){ const n=tr.length, A=[], b=[];
+    for(let i=0;i<=d;i++){ A.push(new Array(d+1).fill(0)); b.push(0); }
+    tr.forEach(([x,y])=>{ for(let i=0;i<=d;i++){ b[i]+=y*x**i/n; for(let j=0;j<=d;j++) A[i][j]+=x**(i+j)/n; } });
+    for(let i=0;i<=d;i++) A[i][i]+= (i>0?a:0) + 1e-12;
+    return solve(A,b); }
+  const pred=(w,x)=>w.reduce((s,c,i)=>s+c*x**i,0);
+  const rmse=(w,pts)=>Math.sqrt(pts.reduce((s,[x,y])=>s+(pred(w,x)-y)**2,0)/pts.length);
+  function draw(){
+    const d=+$('of-deg').value, ai=+$('of-alpha').value, a=ALPHAS[ai];
+    $('of-degv').textContent=d+(d===1?' (düz xətt)':''); $('of-alphav').textContent=a===0?'0 (yoxdur)':String(a);
+    const w=fitPoly(d,a);
+    let {ctx,w:W,h}=fit($('of-cv'),0.5,260,400);
+    let F=frame(ctx,W,h,{x0:-1.05,x1:1.05,y0:-2.6,y1:2.6,xt:[-1,-0.5,0,0.5,1],yt:[-2,-1,0,1,2],xl:'x',l:40});
+    F.clip();
+    const tc=[], mc=[]; for(let i=0;i<=300;i++){ const x=-1.05+2.1*i/300; tc.push([F.X(x),F.Y(f(x))]); const p=pred(w,x); mc.push([F.X(x), Math.abs(p)>50?NaN:F.Y(Math.max(-4,Math.min(4,p)))]); }
+    path(ctx,tc,css('muted'),1.5,[5,5]); path(ctx,mc,css('ink'),2.5);
+    va.forEach(([x,y])=>dot(ctx,F.X(x),F.Y(y),5,null,css('rec'),2));
+    tr.forEach(([x,y])=>dot(ctx,F.X(x),F.Y(y),5,css('accent'),css('surface'),1.5));
+    ctx.restore();
+    const curT=[],curV=[]; let best=1, bestV=1e9;
+    for(let k=1;k<=15;k++){ const wk=fitPoly(k,a), et=rmse(wk,tr), ev=rmse(wk,va); curT.push(et); curV.push(ev); if(ev<bestV){bestV=ev;best=k;} }
+    ({ctx,w:W,h}=fit($('of-cv2'),0.26,150,210));
+    F=frame(ctx,W,h,{x0:0.5,x1:15.5,y0:0,y1:1.2,xt:[1,3,5,7,9,11,13,15],yt:[0,0.4,0.8,1.2],xl:'polinomun dərəcəsi (mürəkkəblik) →',yl:'xəta (RMSE)',l:52});
+    ctx.fillStyle=css('soft'); ctx.fillRect(F.X(d-0.5),F.T,F.X(d+0.5)-F.X(d-0.5),h-F.T-F.B);
+    F.clip();
+    path(ctx,curT.map((e,i)=>[F.X(i+1),F.Y(Math.min(1.3,e))]),css('accent'),2);
+    path(ctx,curV.map((e,i)=>[F.X(i+1),F.Y(Math.min(1.3,e))]),css('rec'),2);
+    curT.forEach((e,i)=>dot(ctx,F.X(i+1),F.Y(Math.min(1.3,e)),3,css('accent')));
+    curV.forEach((e,i)=>dot(ctx,F.X(i+1),F.Y(Math.min(1.3,e)),3,css('rec')));
+    ctx.restore();
+    ctx.font=MONO; ctx.textAlign='right'; ctx.fillStyle=css('accent'); ctx.fillText('train xətası',W-16,F.T+12); ctx.fillStyle=css('rec'); ctx.fillText('validation xətası',W-16,F.T+26);
+    const et=curT[d-1], ev=curV[d-1], show=v=>v>10?'> 10':v.toFixed(3);
+    stats($('of-stats'),[['train xətası',show(et)],['validation xətası',show(ev)],['fərq',show(Math.max(0,ev-et))],['bu α-da ən yaxşı dərəcə',String(best)]]);
+    let cls,msg;
+    if(ev-et>0.15 && ev>0.45){cls='bad';msg='<b>Overfitting.</b> Train xətası '+show(et)+', validation xətası isə '+show(ev)+'. Model train nöqtələrinin küyünü əzbərləyib. Dərəcəni azalt və ya α-nı artır.';}
+    else if(et>0.38){cls='warn';msg='<b>Underfitting.</b> Model əyrini tuta bilmir — həm train, həm validation xətası yüksəkdir. '+(a>=1?'Regularizasiya çox güclüdür: əmsallar demək olar ki, sıfıra sıxışdırılıb.':'Daha mürəkkəb model lazımdır.');}
+    else {cls='good';msg='<b>Yaxşı balans.</b> Train və validation xətaları bir-birinə yaxındır — model ümumi formanı öyrənib, küyü yox.';}
+    status($('of-msg'),cls,msg);
+  }
+  $('of-deg').addEventListener('input',draw); $('of-alpha').addEventListener('input',draw);
+  sims.overfit={draw};
+})();
+
+/* ---------------- GINI ---------------- */
+(function(){
+  const A=[1.0,1.4,1.8,2.1,2.5,3.0,3.6,5.2], B=[3.3,4.4,4.8,5.6,6.1,6.7,7.2,7.8];
+  const pts=A.map((x,i)=>({x,c:0,j:i})).concat(B.map((x,i)=>({x,c:1,j:i}))).sort((a,b)=>a.x-b.x);
+  const gini=(a,b)=>{ const n=a+b; if(!n) return 0; return 1-(a/n)**2-(b/n)**2; };
+  function split(t){ let la=0,lb=0,ra=0,rb=0; pts.forEach(p=>{ if(p.x<=t){ p.c?lb++:la++; } else { p.c?rb++:ra++; } });
+    const gl=gini(la,lb), gr=gini(ra,rb), n=pts.length, wg=((la+lb)*gl+(ra+rb)*gr)/n; return {la,lb,ra,rb,gl,gr,wg}; }
+  function draw(){
+    const t=$('gi-t').value/100; $('gi-tv').textContent=t.toFixed(2);
+    const s=split(t);
+    let {ctx,w,h}=fit($('gi-cv'),0.26,160,210);
+    let F=frame(ctx,w,h,{x0:0.5,x1:8.5,y0:0,y1:1,xt:[1,2,3,4,5,6,7,8],xl:'x (məs. meyvənin çəkisi)',l:16,r:16});
+    ctx.fillStyle=css('soft'); ctx.fillRect(F.L,F.T,F.X(t)-F.L,h-F.T-F.B);
+    ctx.strokeStyle=css('line'); ctx.beginPath(); ctx.moveTo(F.L,F.Y(0.5)); ctx.lineTo(w-F.R,F.Y(0.5)); ctx.stroke();
+    pts.forEach((p,i)=>{ const y=F.Y(0.5+((i%3)-1)*0.22), x=F.X(p.x);
+      if(p.c===0) dot(ctx,x,y,7,css('c1'),css('surface'),1.5);
+      else { ctx.fillStyle=css('c2'); ctx.fillRect(x-6.5,y-6.5,13,13); } });
+    ctx.strokeStyle=css('warn'); ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(F.X(t),F.T-2); ctx.lineTo(F.X(t),h-F.B); ctx.stroke();
+    ctx.font=MONO; ctx.fillStyle=css('muted'); ctx.textAlign='left'; ctx.fillText('sol səbət: x ≤ '+t.toFixed(2),F.L+6,F.T+12); ctx.textAlign='right'; ctx.fillText('sağ səbət: x > '+t.toFixed(2),w-F.R-6,F.T+12);
+    stats($('gi-stats'),[
+      ['sol səbət','A '+s.la+' · B '+s.lb],['Gini (sol)',s.gl.toFixed(3)],
+      ['sağ səbət','A '+s.ra+' · B '+s.rb],['Gini (sağ)',s.gr.toFixed(3)],['çəkili Gini',s.wg.toFixed(3)]]);
+    ({ctx,w,h}=fit($('gi-cv2'),0.22,130,180));
+    F=frame(ctx,w,h,{x0:0.5,x1:8.5,y0:0,y1:0.55,xt:[1,2,3,4,5,6,7,8],yt:[0,0.25,0.5],xl:'hədd — hər mümkün sualın keyfiyyəti (aşağı = yaxşı)',yl:'çəkili Gini',l:52,r:16});
+    const cur=[]; for(let i=0;i<=400;i++){ const tt=0.5+8*i/400; cur.push([F.X(tt),F.Y(split(tt).wg)]); }
+    path(ctx,cur,css('accent'),2); dot(ctx,F.X(t),F.Y(s.wg),6,css('warn'),css('surface'),2);
+    const nl=s.la+s.lb, nr=s.ra+s.rb;
+    const msg = (nl===0||nr===0) ? 'Bütün nümunələr bir tərəfdədir — sual heç nəyi ayırmır, çəkili Gini ümumi qarışıqlığa (0.500) bərabərdir.'
+      : 'Çəkili Gini = ('+nl+'/16)·'+s.gl.toFixed(3)+' + ('+nr+'/16)·'+s.gr.toFixed(3)+' = <b>'+s.wg.toFixed(3)+'</b>. '+(s.wg<0.2?'Çox yaxşı bölgü: hər iki səbət demək olar ki, təmizdir.':'Səbətlər hələ qarışıqdır — başqa həddə bax.');
+    status($('gi-msg'),'info',msg);
+  }
+  $('gi-t').addEventListener('input',draw);
+  $('gi-best').addEventListener('click',()=>{ let best=null,bv=9; for(let i=0;i<pts.length-1;i++){ const m=(pts[i].x+pts[i+1].x)/2, v=split(m).wg; if(v<bv-1e-12){bv=v;best=m;} } $('gi-t').value=Math.round(best*100); draw(); });
+  sims.gini={draw};
+})();
+
+/* ---------------- PCA ---------------- */
+(function(){
+  const r=rng(3), P=[], ang=35*Math.PI/180;
+  for(let i=0;i<70;i++){ const a=gauss(r)*1.6, b=gauss(r)*0.55; P.push([a*Math.cos(ang)-b*Math.sin(ang)+0.3, a*Math.sin(ang)+b*Math.cos(ang)-0.2]); }
+  const mx=P.reduce((s,p)=>s+p[0],0)/P.length, my=P.reduce((s,p)=>s+p[1],0)/P.length;
+  let sxx=0,syy=0,sxy=0; P.forEach(([x,y])=>{ sxx+=(x-mx)**2; syy+=(y-my)**2; sxy+=(x-mx)*(y-my); }); sxx/=P.length; syy/=P.length; sxy/=P.length;
+  const total=sxx+syy, pc1=((0.5*Math.atan2(2*sxy,sxx-syy))*180/Math.PI+180)%180;
+  function draw(){
+    const deg=+$('pc-a').value; $('pc-av').textContent=deg+'°';
+    const th=deg*Math.PI/180, ux=Math.cos(th), uy=Math.sin(th);
+    const proj=P.map(([x,y])=>(x-mx)*ux+(y-my)*uy), v=proj.reduce((s,p)=>s+p*p,0)/P.length, pct=v/total*100;
+    let {ctx,w,h}=fit($('pc-cv'),0.6,280,440);
+    const half=5, sc=Math.min(w/(2*half), h/(2*half*0.75)), cx=w/2, cy=h/2;
+    const X=x=>cx+(x-mx)*sc, Y=y=>cy-(y-my)*sc;
+    ctx.strokeStyle=css('line'); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(w,cy); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    P.forEach(([x,y],i)=>{ const px=mx+proj[i]*ux, py=my+proj[i]*uy; ctx.strokeStyle=css('muted'); ctx.globalAlpha=0.35; ctx.beginPath(); ctx.moveTo(X(x),Y(y)); ctx.lineTo(X(px),Y(py)); ctx.stroke(); ctx.globalAlpha=1; });
+    ctx.strokeStyle=css('warn'); ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(X(mx-ux*20),Y(my-uy*20)); ctx.lineTo(X(mx+ux*20),Y(my+uy*20)); ctx.stroke();
+    P.forEach(([x,y])=>dot(ctx,X(x),Y(y),4.5,css('accent'),css('surface'),1));
+    proj.forEach(p=>dot(ctx,X(mx+p*ux),Y(my+p*uy),3,css('rec')));
+    ({ctx,w,h}=fit($('pc-cv2'),0.12,70,90));
+    const L=16,R=16, sx=x=>L+(x+5)/10*(w-L-R), y0=h/2+6;
+    ctx.strokeStyle=css('warn'); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(L,y0); ctx.lineTo(w-R,y0); ctx.stroke();
+    ctx.globalAlpha=0.7; proj.forEach(p=>dot(ctx,sx(Math.max(-5,Math.min(5,p))),y0,4,css('rec'))); ctx.globalAlpha=1;
+    ctx.font=MONO; ctx.fillStyle=css('muted'); ctx.textAlign='left'; ctx.fillText('nəticə: hər nöqtə indi bir rəqəmdir (kölgələrin yeri)',L,14);
+    stats($('pc-stats'),[['bu oxda saxlanan məlumat',pct.toFixed(1)+'%'],['itən məlumat',(100-pct).toFixed(1)+'%'],['PC1-in bucağı',pc1.toFixed(0)+'°']]);
+    const dd=Math.min(Math.abs(deg-pc1),180-Math.abs(deg-pc1));
+    let cls,msg;
+    if(dd<3){cls='good';msg='<b>Bu PC1-dir.</b> Kölgələr maksimum yayılıb — iki ölçüdən bir ölçüyə keçəndə variasiyanın '+pct.toFixed(1)+'%-i saxlanılır.';}
+    else if(Math.abs(dd-90)<3){cls='bad';msg='<b>Bu PC2-dir</b> — PC1-ə perpendikulyar. Kölgələr bir yerə yığılıb: cəmi '+pct.toFixed(1)+'% saxlanılır. Bu ox tək başına çox az məlumat daşıyır.';}
+    else {cls='warn';msg='Bu oxda variasiyanın '+pct.toFixed(1)+'%-i saxlanılır. PC1-dən '+dd.toFixed(0)+'° uzaqsan — oxu fırlat və faizin necə dəyişdiyinə bax.';}
+    status($('pc-msg'),cls,msg);
+  }
+  $('pc-a').addEventListener('input',draw);
+  $('pc-1').addEventListener('click',()=>{ $('pc-a').value=Math.round(pc1)%180; draw(); });
+  $('pc-2').addEventListener('click',()=>{ $('pc-a').value=Math.round(pc1+90)%180; draw(); });
+  sims.pca={draw};
+})();
+
+/* ---------------- K-MEANS ---------------- */
+(function(){
+  const r=rng(11), P=[];
+  [[-2.6,1.6],[2.1,2.0],[0.2,-2.1]].forEach(([cx,cy])=>{ for(let i=0;i<30;i++) P.push([cx+gauss(r)*0.75, cy+gauss(r)*0.75]); });
+  let seedN=5, k=3, C=[], asg=null, phase='assign', iter=0, moves=null, done=false, msg='';
+  const d2=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2;
+  function init(){ const rr=rng(seedN++), idx=new Set(); while(idx.size<k) idx.add(Math.floor(rr()*P.length));
+    C=[...idx].map(i=>P[i].slice()); asg=null; phase='assign'; iter=0; moves=null; done=false;
+    msg='Başlanğıc: '+k+' mərkəz təsadüfi nöqtələrin üstünə qoyuldu. «Növbəti addım» bas — nöqtələr ən yaxın mərkəzə təyin olunacaq.'; draw(); }
+  function step(){ if(done) return;
+    if(phase==='assign'){ asg=P.map(p=>{ let b=0; C.forEach((c,j)=>{ if(d2(p,c)<d2(p,C[b])) b=j; }); return b; }); moves=null; phase='update';
+      msg='<b>Təyin etmə:</b> hər nöqtə ən yaxın mərkəzin rəngini aldı. Növbəti addımda mərkəzlər öz nöqtələrinin ortasına köçəcək.'; }
+    else { const old=C.map(c=>c.slice());
+      C=C.map((c,j)=>{ const m=P.filter((p,i)=>asg[i]===j); return m.length?[m.reduce((s,p)=>s+p[0],0)/m.length, m.reduce((s,p)=>s+p[1],0)/m.length]:c; });
+      moves=old.map((o,j)=>[o,C[j]]); iter++; phase='assign';
+      const mv=Math.max(...moves.map(([a,b])=>Math.sqrt(d2(a,b))));
+      if(mv<1e-3){ done=true; moves=null; msg='<b>Yığıldı</b> ('+iter+' iterasiya). Mərkəzlər daha tərpənmir — hər nöqtə artıq ən yaxın mərkəzinə aiddir.'; }
+      else msg='<b>Yeniləmə:</b> hər mərkəz öz nöqtələrinin ortasına köçdü (oxlar). Mərkəz yer dəyişdiyi üçün bəzi nöqtələr indi başqa mərkəzə daha yaxın ola bilər.'; }
+    draw(); }
+  function inertia(){ if(!asg) return null; return P.reduce((s,p,i)=>s+d2(p,C[asg[i]]),0); }
+  function draw(){
+    const {ctx,w,h}=fit($('km-cv'),0.62,280,460);
+    const sc=Math.min(w/10.4, h/9), cx=w/2, cy=h/2, X=x=>cx+x*sc, Y=y=>cy-y*sc;
+    const cols=['c1','c2','c3','c4','c5'].map(css);
+    P.forEach((p,i)=>dot(ctx,X(p[0]),Y(p[1]),4.5, asg?cols[asg[i]]:css('muted'), css('surface'),1));
+    if(moves) moves.forEach(([a,b],j)=>arrow(ctx,X(a[0]),Y(a[1]),X(b[0]),Y(b[1]),cols[j],2));
+    C.forEach((c,j)=>{ const x=X(c[0]), y=Y(c[1]); ctx.strokeStyle=css('surface'); ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(x-8,y-8); ctx.lineTo(x+8,y+8); ctx.moveTo(x+8,y-8); ctx.lineTo(x-8,y+8); ctx.stroke(); ctx.strokeStyle=cols[j]; ctx.lineWidth=3.5; ctx.stroke(); });
+    const I=inertia();
+    stats($('km-stats'),[['iterasiya',String(iter)],['növbəti addım',done?'— (bitib)':(phase==='assign'?'təyin etmə':'yeniləmə')],['inertia',I===null?'—':I.toFixed(1)]]);
+    status($('km-msg'),done?'good':'info',msg);
+  }
+  $('km-k').addEventListener('input',()=>{ k=+$('km-k').value; $('km-kv').textContent=k; init(); });
+  $('km-step').addEventListener('click',step);
+  $('km-run').addEventListener('click',()=>{ let g=0; while(!done&&g++<100) step(); });
+  $('km-new').addEventListener('click',init);
+  init();
+  sims.kmeans={draw, seed(n){ seedN=+n; init(); }};
+})();
+
+/* ---------------- BACKPROP ---------------- */
+(function(){
+  const N={
+    n1:{p:[0.12,0.84],lab:'x',val:3}, n2:{p:[0.5,0.84],lab:'y',val:4}, n3:{p:[0.88,0.84],lab:'2',val:2},
+    n4:{p:[0.16,0.55],lab:'×',val:9,sub:'n4 = x·x'}, n5:{p:[0.32,0.3],lab:'×',val:36,sub:'n5 = n4·y'},
+    n6:{p:[0.7,0.5],lab:'+',val:6,sub:'n6 = y+2'}, n7:{p:[0.5,0.1],lab:'+',val:42,sub:'f = n5+n6'}};
+  const E={e14a:['n1','n4',-0.25],e14b:['n1','n4',0.25],e45:['n4','n5',0],e25:['n2','n5',0],e26:['n2','n6',0],e36:['n3','n6',0],e57:['n5','n7',0],e67:['n6','n7',0]};
+  const S=[
+    {v:['n1','n2','n3'],g:{},a:[],e:[],t:'Başlanğıc. Hər düyün bir əməliyyatdır: x, y və sabit 2 girişlərdir, × və + əməliyyatlardır. x = 3, y = 4. «İrəli →» bas.'},
+    {v:['n4'],a:['n4'],e:['e14a','e14b'],t:'<b>İrəli keçid.</b> n4 = x · x = 3 · 3 = <b>9</b>'},
+    {v:['n5'],a:['n5'],e:['e45','e25'],t:'n5 = n4 · y = 9 · 4 = <b>36</b>'},
+    {v:['n6'],a:['n6'],e:['e26','e36'],t:'n6 = y + 2 = 4 + 2 = <b>6</b>'},
+    {v:['n7'],a:['n7'],e:['e57','e67'],t:'n7 = n5 + n6 = 36 + 6 = <b>42</b>. Deməli f(3, 4) = 42. İrəli keçid bitdi — hər düyünün dəyəri yadda saxlanılıb, geri keçiddə lazım olacaq.'},
+    {g:{n7:1},a:['n7'],e:[],t:'<b>Geri keçid başlayır.</b> f elə n7-dir, ona görə ∂f/∂n7 = <b>1</b>. («f özü 1 vahid dəyişsə, f 1 vahid dəyişir.»)'},
+    {g:{n5:1,n6:1},a:['n5','n6'],e:['e57','e67'],t:'n7 = n5 + n6. <b>Toplama</b> qradiyenti olduğu kimi ötürür: ∂n7/∂n5 = 1. Zəncir qaydası: ∂f/∂n5 = ∂f/∂n7 · ∂n7/∂n5 = 1 · 1 = <b>1</b>. Eyni qayda ilə ∂f/∂n6 = <b>1</b>.'},
+    {g:{n4:4},a:['n4'],e:['e45'],t:'n5 = n4 · y. <b>Vurmada</b> qradiyent o biri vuruğa vurulur: ∂n5/∂n4 = y = 4. Deməli ∂f/∂n4 = ∂f/∂n5 · y = 1 · 4 = <b>4</b>.'},
+    {g:{n2:10,n3:1},a:['n2'],e:['e25','e26','e36'],t:'y iki yerdə işlənib, ona görə iki qradiyent <b>toplanır</b>. n5-dən: ∂f/∂n5 · n4 = 1 · 9 = 9. n6-dan: ∂f/∂n6 · 1 = 1. Cəmi ∂f/∂y = 9 + 1 = <b>10</b>. (Sabit 2-nin də qradiyenti 1-dir, amma sabit öyrədilmir.)'},
+    {g:{n1:24},a:['n1'],e:['e14a','e14b'],t:'n4 = x · x = x². ∂n4/∂x = 2x = 6. Deməli ∂f/∂x = ∂f/∂n4 · 2x = 4 · 6 = <b>24</b>.'},
+    {g:{},a:['n1','n2'],e:[],t:'<b>Hazırdır:</b> ∂f/∂x = 24, ∂f/∂y = 10. Yoxlayaq: əl ilə 2xy = 2·3·4 = 24 ✓, x² + 1 = 10 ✓. Cəmi iki keçid kifayət etdi — parametr minlərlə olsaydı da, yenə iki keçid.'}
+  ];
+  let k=0;
+  function state(){ const v=new Set(), g={}; for(let i=0;i<=k;i++){ (S[i].v||[]).forEach(x=>v.add(x)); Object.assign(g,S[i].g||{}); } if(k>=4) Object.keys(N).forEach(x=>v.add(x)); return {v,g}; }
+  function draw(){
+    const {v,g}=state(), st=S[k];
+    const {ctx,w,h}=fit($('bp-cv'),0.58,330,470);
+    const R=Math.max(20,Math.min(30,w/24)), P=id=>[N[id].p[0]*w, 20+N[id].p[1]*(h-40)];
+    const back=k>=5;
+    Object.entries(E).forEach(([id,[a,b,bend]])=>{
+      const [x1,y1]=P(a), [x2,y2]=P(b), act=st.e.includes(id);
+      const col=act?(back?css('rec'):css('warn')):css('line');
+      const ang=Math.atan2(y2-y1,x2-x1), ox=Math.cos(ang+Math.PI/2)*bend*R*1.4, oy=Math.sin(ang+Math.PI/2)*bend*R*1.4;
+      const sx=x1+Math.cos(ang)*R+ox, sy=y1+Math.sin(ang)*R+oy, ex=x2-Math.cos(ang)*R+ox, ey=y2-Math.sin(ang)*R+oy;
+      if(act&&back) arrow(ctx,ex,ey,sx,sy,col,2.5); else arrow(ctx,sx,sy,ex,ey,col,act?2.5:1.5);
+    });
+    Object.entries(N).forEach(([id,n])=>{
+      const [x,y]=P(id), act=st.a.includes(id);
+      dot(ctx,x,y,R,css('surface'),act?css('warn'):css('muted'),act?3.5:1.5);
+      ctx.fillStyle=css('ink'); ctx.font='600 '+Math.round(R*0.8)+'px "Bricolage Grotesque", system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n.lab,x,y+1);
+      ctx.textBaseline='alphabetic'; ctx.font=MONO; ctx.textAlign='left';
+      const tx=x+R+6;
+      ctx.fillStyle=css('muted'); ctx.fillText(id+(n.sub?'  '+n.sub:''),tx,y-R*0.55);
+      if(v.has(id)){ ctx.fillStyle=css('ink'); ctx.font='500 13px "IBM Plex Mono", monospace'; ctx.fillText('= '+n.val,tx,y+4); }
+      if(g[id]!==undefined){ ctx.fillStyle=css('rec'); ctx.font='500 13px "IBM Plex Mono", monospace'; ctx.fillText('∂f = '+g[id],tx,y+R*0.75); }
+    });
+    $('bp-count').textContent='addım '+k+' / '+(S.length-1)+(k===0?'':k<=4?' · irəli keçid':k<S.length-1?' · geri keçid':' · bitdi');
+    status($('bp-msg'),k===S.length-1?'good':'info',st.t);
+    $('bp-prev').disabled=k===0; $('bp-next').disabled=k===S.length-1;
+  }
+  $('bp-next').addEventListener('click',()=>{ if(k<S.length-1){k++;draw();} });
+  $('bp-prev').addEventListener('click',()=>{ if(k>0){k--;draw();} });
+  $('bp-reset').addEventListener('click',()=>{k=0;draw();});
+  sims.backprop={draw, go(n){ k=Math.max(0,Math.min(S.length-1,+n)); draw(); }};
+})();
+
+/* ---------------- VANISHING ---------------- */
+(function(){
+  const NAMES={'0.25':'Sigmoid','0.65':'Tanh','1':'ReLU'};
+  function draw(){
+    const d=+$('vg-act').value, L=+$('vg-L').value, wv=$('vg-w').value/10;
+    $('vg-Lv').textContent=L; $('vg-wv').textContent=wv.toFixed(1);
+    const f=wv*d, gs=[]; for(let k=1;k<=L;k++) gs.push(Math.pow(f,L-k));
+    const {ctx,w,h}=fit($('vg-cv'),0.42,240,360);
+    const F=frame(ctx,w,h,{x0:0.4,x1:L+0.6,y0:-12,y1:6,yt:[-12,-9,-6,-3,0,3,6],yf:v=>'10'+String(v).replace('-','⁻').replace(/\d/g,c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[c]),xt:L<=15?gs.map((_,i)=>i+1):[1,Math.round(L/2),L],xl:'qat  (1 = girişə yaxın  ←  qradiyent sağdan sola axır  ←  '+L+' = çıxışa yaxın)',l:52});
+    const bw=Math.max(3,(w-F.L-F.R)/L*0.65), y0=F.Y(0);
+    ctx.strokeStyle=css('muted'); ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(F.L,y0); ctx.lineTo(w-F.R,y0); ctx.stroke(); ctx.setLineDash([]);
+    gs.forEach((g,i)=>{ const lg=Math.max(-12,Math.min(6,Math.log10(g))), x=F.X(i+1)-bw/2;
+      ctx.fillStyle = lg<-3?css('bad'):lg>3?css('warn'):css('good');
+      const y=F.Y(lg); ctx.fillRect(x,Math.min(y,y0),bw,Math.max(2,Math.abs(y-y0))); });
+    const g1=gs[0];
+    stats($('vg-stats'),[['hər qatda vurulan faktor',f.toFixed(3)],['çıxış qatının qradiyenti','1'],['1-ci qatın qradiyenti',g1>1e4||g1<1e-3?g1.toExponential(1):g1.toFixed(4)]]);
+    let cls,msg; const name=NAMES[$('vg-act').value];
+    if(g1>=1e-3&&g1<0.1){cls='warn';msg='<b>Qradiyent zəifləyir.</b> '+name+' ilə faktor '+f.toFixed(2)+'-dir: 1-ci qata '+g1.toFixed(4)+' çatır, yəni o, çıxış qatından '+Math.round(1/g1)+' dəfə yavaş öyrənir. Qat artdıqca vəziyyət sürətlə pisləşəcək.';}
+    else if(g1<1e-3){cls='bad';msg='<b>Yox olan qradiyent.</b> '+name+' ilə faktor '+f.toFixed(2)+'-dir, '+(L-1)+' dəfə vurulanda 1-ci qata cəmi '+g1.toExponential(1)+' çatır. Çıxışa yaxın qatlar öyrənir, girişə yaxın qatlar isə demək olar ki, dəyişmir.';}
+    else if(g1>1e3){cls='warn';msg='<b>Partlayan qradiyent.</b> Faktor 1-dən böyükdür ('+f.toFixed(2)+'), ona görə 1-ci qatın qradiyenti '+g1.toExponential(1)+'-ə çatır. Çəkilər nəhəng addımlarla dəyişir, təlim qeyri-sabit olur, loss NaN ola bilər.';}
+    else {cls='good';msg='<b>Sağlam axın.</b> Faktor 1-ə yaxındır ('+f.toFixed(2)+'), qradiyent bütün '+L+' qatdan keçir və hər qat öyrənə bilir. ReLU + düzgün inisializasiyanın (He) məqsədi məhz budur.';}
+    status($('vg-msg'),cls,msg);
+  }
+  ['vg-act','vg-L','vg-w'].forEach(id=>$(id).addEventListener('input',draw));
+  sims.vanishing={draw};
+})();
+
+/* ---------------- CONVOLUTION ---------------- */
+(function(){
+  const K={v:[[-1,0,1],[-2,0,2],[-1,0,1]], h:[[-1,-2,-1],[0,0,0],[1,2,1]], b:[[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]], s:[[0,-1,0],[-1,5,-1],[0,-1,0]]};
+  const KN={v:'Şaquli kənar',h:'Üfüqi kənar',b:'Bulanıqlaşdırma',s:'Kəskinləşdirmə'};
+  const DEF=[[2,2],[2,3],[2,4],[2,5],[2,6],[2,7],[3,7],[4,6],[5,6],[6,5],[7,5],[8,4]];
+  let img=[]; const reset=()=>{ img=Array.from({length:10},()=>new Array(10).fill(0)); };
+  const setDef=()=>{ reset(); DEF.forEach(([r,c])=>img[r][c]=1); };
+  setDef();
+  const inG=$('cv-in'), outG=$('cv-out'), poolG=$('cv-pool'), kG=$('cv-kern');
+  const inC=[], outC=[], poolC=[], kC=[];
+  for(let r=0;r<10;r++) for(let c=0;c<10;c++){ const d=document.createElement('div'); d.className='px'; d.tabIndex=0; d.setAttribute('role','button');
+    d.addEventListener('click',()=>{ img[r][c]=1-img[r][c]; draw(); });
+    d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); d.click();} });
+    inG.appendChild(d); inC.push(d); }
+  for(let i=0;i<64;i++){ const d=document.createElement('div'); d.className='px'; outG.appendChild(d); outC.push(d); }
+  for(let i=0;i<16;i++){ const d=document.createElement('div'); d.className='px'; poolG.appendChild(d); poolC.push(d); }
+  for(let i=0;i<9;i++){ const d=document.createElement('div'); d.className='kc'; kG.appendChild(d); kC.push(d); }
+  const kf=v=>Math.abs(v-1/9)<1e-9?'1/9':String(v).replace('-','−');
+  const nf=v=>(Math.round(v*100)/100).toString().replace('-','−');
+  function colorFor(v,m){ if(Math.abs(v)<1e-9||m===0) return 'var(--soft)'; const p=Math.round(Math.min(1,Math.abs(v)/m)*85)+10; return 'color-mix(in srgb, var('+(v>0?'--accent':'--rec')+') '+p+'%, var(--surface))'; }
+  let timer=null;
+  function draw(){
+    const kk=$('cv-k').value, k=K[kk], pos=+$('cv-pos').value, pr=Math.floor(pos/8), pc=pos%8;
+    $('cv-posv').textContent='sətir '+(pr+1)+', sütun '+(pc+1);
+    const out=[]; for(let i=0;i<8;i++){ out.push([]); for(let j=0;j<8;j++){ let s=0; for(let a=0;a<3;a++) for(let b=0;b<3;b++) s+=k[a][b]*img[i+a][j+b]; out[i].push(s); } }
+    const m=Math.max(...out.flat().map(Math.abs));
+    inC.forEach((d,i)=>{ const r=Math.floor(i/10), c=i%10; d.className='px'+(img[r][c]?' on':'')+(r>=pr&&r<pr+3&&c>=pc&&c<pc+3?' win':''); d.setAttribute('aria-label','piksel '+(r+1)+','+(c+1)+(img[r][c]?' qara':' ağ')); });
+    outC.forEach((d,i)=>{ const r=Math.floor(i/8), c=i%8, v=out[r][c]; d.style.background=colorFor(v,m); d.textContent=Math.abs(v)<1e-9?'':(Math.round(v*10)/10).toString().replace('-','−'); d.className='px'+(r===pr&&c===pc?' cur':''); });
+    const pool=[]; for(let i=0;i<4;i++) for(let j=0;j<4;j++){ pool.push(Math.max(out[2*i][2*j],out[2*i][2*j+1],out[2*i+1][2*j],out[2*i+1][2*j+1])); }
+    const pm=Math.max(...pool.map(Math.abs));
+    poolC.forEach((d,i)=>{ const v=pool[i], r=Math.floor(i/4), c=i%4; d.style.background=colorFor(v,pm); d.textContent=Math.abs(v)<1e-9?'':(Math.round(v*10)/10).toString().replace('-','−'); d.className='px'+(Math.floor(pr/2)===r&&Math.floor(pc/2)===c?' cur':''); });
+    let sum=0; const terms=[];
+    kC.forEach((d,i)=>{ const a=Math.floor(i/3), b=i%3, wv=k[a][b], p=img[pr+a][pc+b]; sum+=wv*p; if(wv!==0&&p) terms.push(kf(wv));
+      d.className='kc'+(wv>0?' pos':wv<0?' neg':''); d.innerHTML=kf(wv)+'<small>× '+p+'</small>'; });
+    $('cv-sum').textContent='cəm = '+nf(sum);
+    const v=out[pr][pc];
+    let msg='<b>'+KN[kk]+'</b> filtri, mövqe ('+(pr+1)+', '+(pc+1)+'): pəncərədəki qara piksellərin (1) çəkiləri toplanır'+(terms.length?' → '+terms.join(' + ').replace(/\+ −/g,'− ')+' = <b>'+nf(v)+'</b>.':' — pəncərədə qara pikselin üstünə düşən sıfırdan fərqli çəki yoxdur, cəm 0.');
+    if((kk==='v'||kk==='h') && terms.length && Math.abs(v)<1e-9) msg+=' Müsbət və mənfi çəkilər bir-birini sildi — bu yerdə bu istiqamətdə kənar yoxdur.';
+    status($('cv-msg'),'info',msg);
+  }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; $('cv-play').textContent='▶ Sürüşdür'; } }
+  function start(){ if(timer) return; $('cv-play').textContent='❚❚ Dayandır';
+    timer=setInterval(()=>{ const s=$('cv-pos'); s.value=(+s.value+1)%64; draw(); }, RM?700:380); }
+  $('cv-play').addEventListener('click',()=>{ if(timer) stop(); else start(); });
+  $('cv-pos').addEventListener('input',()=>{stop();draw();});
+  $('cv-k').addEventListener('input',draw);
+  $('cv-clear').addEventListener('click',()=>{reset();draw();});
+  $('cv-def').addEventListener('click',()=>{setDef();draw();});
+  sims.conv={draw, leave:stop,
+    img(name){ stop(); if(name==='vline'){ reset(); for(let r=1;r<9;r++) img[r][5]=1; } else setDef(); draw(); },
+    play(){ start(); }};
+})();
+
+/* ---------------- ATTENTION ---------------- */
+(function(){
+  const W=['Pişik','südü','içdi','çünki','o','ac','idi'];
+  const S=[
+    [2.0,0.8,1.4,0.1,0.9,0.6,0.3],
+    [0.9,2.0,1.6,0.1,0.2,0.1,0.2],
+    [1.8,1.9,1.0,0.3,0.4,0.2,0.6],
+    [0.4,0.2,1.2,1.0,0.6,0.9,0.5],
+    [2.8,0.6,0.4,0.3,1.0,1.4,0.5],
+    [2.3,0.3,0.5,0.6,2.0,1.0,0.9],
+    [0.6,0.2,0.8,0.4,1.0,1.9,1.0]];
+  let q=4; const toks=$('at-toks'), tb=[];
+  W.forEach((wd,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='tok'; b.innerHTML=wd+'<span class="w"></span>';
+    b.addEventListener('click',()=>{q=i;draw();}); toks.appendChild(b); tb.push(b); });
+  function draw(){
+    const T=$('at-T').value/100; $('at-Tv').textContent=T.toFixed(2);
+    const sc=S[q], ex=sc.map(s=>Math.exp(s/T)), Z=ex.reduce((a,b)=>a+b,0), wt=ex.map(e=>e/Z);
+    tb.forEach((b,i)=>{ b.classList.toggle('q',i===q); b.setAttribute('aria-pressed',i===q?'true':'false');
+      b.style.background='color-mix(in srgb, var(--accent) '+Math.round(wt[i]*85)+'%, var(--surface))';
+      b.style.color= wt[i]>0.45 ? 'var(--surface)' : 'var(--ink)';
+      b.querySelector('.w').textContent=Math.round(wt[i]*100)+'%';
+      b.querySelector('.w').style.color= wt[i]>0.45 ? 'var(--surface)' : 'var(--muted)'; });
+    const mx=Math.max(...wt);
+    let html='<tr><th>Söz (key)</th><th>Xal Q·K</th><th>Xal ÷ T</th><th>e^(xal ÷ T)</th><th style="min-width:160px">Çəki = e^… ÷ cəm</th></tr>';
+    W.forEach((wd,i)=>{ html+='<tr'+(wt[i]===mx?' class="hl"':'')+'><td>'+wd+(i===q?' <span class="mono" style="color:var(--muted)">(özü)</span>':'')+'</td><td class="n">'+sc[i].toFixed(1)+'</td><td class="n">'+(sc[i]/T).toFixed(2)+'</td><td class="n">'+ex[i].toFixed(2)+'</td><td><div style="display:flex;align-items:center;gap:8px"><div class="wbar" style="width:'+Math.round(wt[i]*130)+'px"></div><span class="mono">'+(wt[i]*100).toFixed(1)+'%</span></div></td></tr>'; });
+    html+='<tr><td><b>Cəm</b></td><td></td><td></td><td class="n">'+Z.toFixed(2)+'</td><td class="mono">100%</td></tr>';
+    $('at-tab').innerHTML=html;
+    const order=wt.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]), top=order[0];
+    let msg='«<b>'+W[q]+'</b>» diqqətinin <b>'+Math.round(top[0]*100)+'%</b>-ni «'+W[top[1]]+'» sözünə verir. ';
+    if(q===4) msg+='Model «o»-nun kim olduğunu belə «başa düşür»: «o» sözünün yeni təsviri əsasən «Pişik»-in məlumatından qurulur.';
+    else if(q===5) msg+='«ac» həm «Pişik», həm də «o» sözlərinə baxır — kimin ac olduğunu bu iki söz deyir.';
+    else if(q===2) msg+='Feil həm subyektə («Pişik»), həm obyektə («südü») baxır: kim içdi və nəyi içdi.';
+    if(T<0.4) msg+=' <i>Temperatur aşağıdır: softmax demək olar ki, «hamısı bir sözə» deyir.</i>';
+    else if(T>2) msg+=' <i>Temperatur yüksəkdir: diqqət bütün sözlərə bərabərə yaxın paylanır, fərqlər itir.</i>';
+    status($('at-msg'),'info',msg);
+  }
+  $('at-T').addEventListener('input',draw);
+  sims.attention={draw, setQ(n){ q=+n; draw(); }};
+})();
+
+/* ---------------- GUIDED TOURS ---------------- */
+function runStep(btn){
+  if(btn.dataset.set){ const o=JSON.parse(btn.dataset.set);
+    for(const id in o){ const el=$(id); if(el.type==='checkbox') el.checked=!!o[id]; else el.value=o[id];
+      el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); } }
+  (btn.dataset.call||'').split(';').filter(Boolean).forEach(c=>{ const [s,fn,arg]=c.split(':'); sims[s][fn](arg); });
+  (btn.dataset.click||'').split(',').filter(Boolean).forEach(id=>$(id).click());
+}
+document.querySelectorAll('ol.guide').forEach(ol=>{
+  const id=ol.dataset.sim, items=[...ol.querySelectorAll('li')], box=document.querySelector('.tour[data-sim="'+id+'"]');
+  let cur=-1;
+  function render(){
+    if(cur<0){ box.className='tour idle';
+      box.innerHTML='<button type="button" class="primary t-start">▶ Bələdçi ilə başla · '+items.length+' addım</button><span style="font-size:.88rem;color:var(--muted)">və ya idarəetmələri özün sərbəst tərpət</span>';
+      box.querySelector('.t-start').addEventListener('click',()=>go(0)); return; }
+    const li=items[cur], why=li.querySelector('details'), last=cur===items.length-1;
+    box.className='tour';
+    box.innerHTML='<div class="tour-head"><span class="eyebrow">Bələdçi · addım '+(cur+1)+' / '+items.length+'</span><button type="button" class="x" aria-label="Bələdçini bağla">✕</button></div>'+
+      '<p class="tour-text">'+li.querySelector('.gt').innerHTML+'</p>'+
+      (why?'<p class="tour-why"><b>'+why.querySelector('summary').textContent+'</b> '+why.querySelector('p').innerHTML+'</p>':'')+
+      '<div class="btns"><button type="button" class="t-prev"'+(cur===0?' disabled':'')+'>← Əvvəlki</button><button type="button" class="primary t-next">'+(last?'Bitir ✓':'Növbəti addım →')+'</button></div>';
+    box.querySelector('.x').addEventListener('click',()=>{cur=-1;render();});
+    box.querySelector('.t-prev').addEventListener('click',()=>go(cur-1));
+    box.querySelector('.t-next').addEventListener('click',()=>{ if(last){cur=-1;render();} else go(cur+1); });
+  }
+  function go(i){ cur=i; runStep(items[i].querySelector('.go')); render();
+    const bench=box.closest('.bench'), r=bench.getBoundingClientRect();
+    if(r.top<0||r.top>window.innerHeight*0.6) bench.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'}); }
+  items.forEach((li,i)=>li.querySelector('.go').addEventListener('click',()=>go(i)));
+  render();
+});
+
+/* ---------------- ROUTER ---------------- */
+const IDS=Object.keys(sims);
+let active=null;
+function route(){
+  let id=location.hash.slice(1); if(!sims[id]) id='scaling';
+  if(active && active!==id && sims[active].leave) sims[active].leave();
+  IDS.forEach(k=>{ $('s-'+k).hidden = k!==id; });
+  document.querySelectorAll('#nav a[data-id]').forEach(a=>{ if(a.dataset.id===id) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  const changed = active!==null && active!==id;
+  active=id; sims[id].draw();
+  if(changed){ const m=$('main'); if(m.getBoundingClientRect().top<0) m.scrollIntoView({block:'start'}); }
+}
+window.addEventListener('hashchange',route);
+let raf=0; const redraw=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{ if(active) sims[active].draw(); }); };
+if(window.ResizeObserver){ let lw=0; new ResizeObserver(es=>{ const cw=es[0].contentRect.width; if(Math.abs(cw-lw)>1){ lw=cw; redraw(); } }).observe($('main')); }
+else window.addEventListener('resize',redraw);
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw); }catch(e){}
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(redraw);
+route();
+})();
+</script>
+
+</body>
+</html>

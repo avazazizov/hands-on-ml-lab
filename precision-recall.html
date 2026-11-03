@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Precision və Recall</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: one reading column; the simulator is a "lab bench" band — cards in a sorted row, threshold slider, matrix + metrics side by side (stacked on phones). */
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --ink:#1a2140; --muted:#5a6280; --line:#dde1ec;
+  --accent:#3346c9; --rec:#b23c8f;
+  --tp:#12806a; --tn:#55678c; --fp:#b86d00; --fn:#c42f3a;
+  --tp-bg:#dcf2ec; --tn-bg:#eaedf5; --fp-bg:#fcefd7; --fn-bg:#fbe2e4;
+  --card:#fffef9; --code:#eef0f7;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-hand:"Caveat", "Comic Sans MS", cursive;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#10131d; --surface:#181c2a; --ink:#e6e9f4; --muted:#9ba3c0; --line:#2a3044;
+  --accent:#8d9cff; --rec:#f07cc8;
+  --tp:#43cfad; --tn:#9fb0d6; --fp:#f2ab3e; --fn:#ff6f78;
+  --tp-bg:#113a32; --tn-bg:#1f2538; --fp-bg:#3b2b0f; --fn-bg:#421a1f;
+  --card:#1e2334; --code:#222839; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#10131d; --surface:#181c2a; --ink:#e6e9f4; --muted:#9ba3c0; --line:#2a3044;
+  --accent:#8d9cff; --rec:#f07cc8;
+  --tp:#43cfad; --tn:#9fb0d6; --fp:#f2ab3e; --fn:#ff6f78;
+  --tp-bg:#113a32; --tn-bg:#1f2538; --fp-bg:#3b2b0f; --fn-bg:#421a1f;
+  --card:#1e2334; --code:#222839; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.45rem,3.6vw,1.9rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.12rem;font-weight:600}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lead{font-size:1.12rem;color:var(--muted)}
+code,.mono{font-family:var(--f-mono);font-size:.9em}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+b{font-weight:600}
+
+/* tags */
+.tag{display:inline-block;font-family:var(--f-mono);font-size:.78em;font-weight:500;padding:0 6px;border-radius:4px;line-height:1.5}
+.t-TP{color:var(--tp);background:var(--tp-bg)} .t-TN{color:var(--tn);background:var(--tn-bg)}
+.t-FP{color:var(--fp);background:var(--fp-bg)} .t-FN{color:var(--fn);background:var(--fn-bg)}
+
+/* bench */
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px clamp(14px,3vw,26px);display:flex;flex-direction:column;gap:22px}
+.zones{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:.78rem;color:var(--muted);gap:8px;flex-wrap:wrap}
+.cards{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.card{width:62px;border-radius:9px;background:var(--card);border:1.5px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:4px 0 5px;gap:1px;transition:opacity .2s, transform .2s, border-color .2s}
+.card .dg{font-family:var(--f-hand);font-size:2.4rem;line-height:1.05;font-weight:600}
+.card .sc{font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.card .tag{font-size:.66rem}
+.card.TP{border-color:var(--tp)} .card.FP{border-color:var(--fp)} .card.FN{border-color:var(--fn)}
+.card.TN{border-color:var(--line)}
+.card.pred{background:linear-gradient(var(--card),var(--card)) padding-box}
+.cards.hl .card{opacity:.22}
+.cards.hl-TP .card.TP,.cards.hl-TN .card.TN,.cards.hl-FP .card.FP,.cards.hl-FN .card.FN{opacity:1;transform:translateY(-3px)}
+.divider{width:4px;border-radius:2px;background:var(--accent);position:relative;align-self:stretch;min-height:84px;margin:0 6px}
+.divider span{position:absolute;top:-22px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--f-mono);font-size:.72rem;color:var(--accent);font-weight:500}
+
+.slider{display:flex;flex-direction:column;gap:8px}
+.slider label{font-weight:500}
+.slider label .mono{color:var(--accent);font-weight:500;font-size:1.05rem}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+.hint{font-size:.88rem;color:var(--muted)}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-size:.88rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px}
+@media (max-width:720px){.split{grid-template-columns:1fr}}
+
+/* matrix */
+.matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;font-size:.85rem;align-self:start}
+.matrix .hd{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center;padding:2px}
+.matrix .rh{writing-mode:vertical-rl;transform:rotate(180deg)}
+.cell{border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px;cursor:pointer;border:1.5px solid transparent;min-height:92px}
+.cell .n{font-family:var(--f-display);font-weight:800;font-size:2rem;line-height:1}
+.cell .nm{font-family:var(--f-mono);font-size:.74rem;font-weight:500}
+.cell .ex{font-size:.76rem;color:var(--muted);line-height:1.3}
+.cell.TP{background:var(--tp-bg);color:var(--tp)} .cell.TN{background:var(--tn-bg);color:var(--tn)}
+.cell.FP{background:var(--fp-bg);color:var(--fp)} .cell.FN{background:var(--fn-bg);color:var(--fn)}
+.cell:hover,.cell.on{border-color:currentColor}
+.mcap{font-size:.8rem;color:var(--muted);grid-column:1/-1;margin-top:4px}
+
+/* metrics */
+.metrics{display:flex;flex-direction:column;gap:12px}
+.metric{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.metric .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.metric .name{font-family:var(--f-display);font-weight:600;font-size:1.05rem}
+.metric .val{font-family:var(--f-display);font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.metric .fx{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.metric .say{font-size:.9rem}
+.metric.p .val{color:var(--accent)} .metric.r .val{color:var(--rec)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;transition:width .25s}
+.metric.p .bar i{background:var(--accent)} .metric.r .bar i{background:var(--rec)} .metric.f .bar i{background:var(--ink)}
+.minor{display:flex;gap:16px;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}
+
+/* chart */
+.chartbox{overflow-x:auto}
+svg text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+.legend{display:flex;gap:18px;font-size:.88rem;flex-wrap:wrap}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+/* explainer blocks */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.panel{border-left:3px solid var(--line);padding:4px 0 4px 16px;display:flex;flex-direction:column;gap:8px}
+.panel.p{border-color:var(--accent)} .panel.r{border-color:var(--rec)}
+.panel h3 span{color:var(--muted);font-weight:400;font-size:.95rem}
+.q{font-family:var(--f-display);font-size:1.08rem;font-weight:600}
+.panel.p .q{color:var(--accent)} .panel.r .q{color:var(--rec)}
+
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;font-size:.92rem;min-width:420px}
+th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{font-weight:600;font-size:.82rem;color:var(--muted)}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;font-size:.95rem}
+.calc .row{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.calc .k{font-weight:600;min-width:92px}
+.calc .mono{color:var(--muted)}
+.calc .res{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+
+.scen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.scen{grid-template-columns:1fr}}
+.scen button{border-radius:12px;text-align:left;padding:14px;display:flex;flex-direction:column;gap:6px;background:var(--surface);line-height:1.45}
+.scen button b{font-family:var(--f-display);font-size:1rem}
+.scen button span{color:var(--muted);font-size:.86rem}
+.scen button em{font-style:normal;font-family:var(--f-mono);font-size:.76rem;color:var(--accent)}
+.scen button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+#scenNote{min-height:1.6em;font-size:.95rem}
+
+details{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px 16px}
+summary{cursor:pointer;font-weight:500}
+details[open] summary{margin-bottom:8px}
+details p+p{margin-top:6px}
+.quiz{display:flex;flex-direction:column;gap:10px}
+.mem{background:var(--surface);border:1px dashed var(--accent);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <a href="index.html" style="color:var(--accent);font-size:.92rem;text-decoration:none">← Hands-On ML Laboratoriyasına qayıt</a>
+  <div class="eyebrow">Fəsil 3 · Təsnifat · interaktiv izah</div>
+  <h1>Precision və Recall</h1>
+  <p class="lead">Kitabdakı «5-detektor» modelini kiçildək: model 20 əl yazısı rəqəmə baxır və hər birinə «bunun 5 olma ehtimalı» balını verir. Sən hədd (threshold) seçirsən — həddən yuxarı olanlara model «5» deyir. Slayderi tərpət və nə dəyişdiyinə bax.</p>
+</header>
+
+<!-- SIMULATOR -->
+<section aria-labelledby="sim-h">
+  <h2 id="sim-h">Simulyator</h2>
+  <div class="bench">
+    <div class="zones"><span>← model «5» deyir (bal yüksək)</span><span>model «5 deyil» deyir (bal aşağı) →</span></div>
+    <div class="cards" id="cards" aria-live="off"></div>
+
+    <div class="slider">
+      <label for="thr">Hədd (threshold): <span class="mono" id="thrVal">0.50</span></label>
+      <input type="range" id="thr" min="0" max="100" value="50" step="1">
+      <p class="hint">Balı həddən böyük və ya ona bərabər olan şəkillərə model «5» deyir. Kartın altındakı rəqəm modelin balıdır, üstündəki etiket isə nəticənin növüdür.</p>
+      <div class="presets">
+        <button type="button" data-t="0.50">Standart (0.50)</button>
+        <button type="button" data-t="0.89">Çox ehtiyatlı (0.89)</button>
+        <button type="button" data-t="0.25">Hamını tutmağa çalış (0.25)</button>
+        <button type="button" data-t="0">Hamısına «5» de</button>
+        <button type="button" data-t="1.01">Heç kimə «5» demə</button>
+      </div>
+    </div>
+
+    <div class="split">
+      <div class="matrix" id="matrix">
+        <div></div><div class="hd">Model dedi:<br>«5 deyil»</div><div class="hd">Model dedi:<br>«5»</div>
+        <div class="hd rh">Əslində: 5 deyil</div>
+        <div class="cell TN" tabindex="0" data-k="TN"><span class="nm">TN · true negative</span><span class="n" id="cTN">0</span><span class="ex">«5 deyil» dedi, düz çıxdı</span></div>
+        <div class="cell FP" tabindex="0" data-k="FP"><span class="nm">FP · false positive</span><span class="n" id="cFP">0</span><span class="ex">«5» dedi, amma 5 deyildi — yalançı həyəcan</span></div>
+        <div class="hd rh">Əslində: 5</div>
+        <div class="cell FN" tabindex="0" data-k="FN"><span class="nm">FN · false negative</span><span class="n" id="cFN">0</span><span class="ex">«5 deyil» dedi, amma 5 idi — qaçırdı</span></div>
+        <div class="cell TP" tabindex="0" data-k="TP"><span class="nm">TP · true positive</span><span class="n" id="cTP">0</span><span class="ex">«5» dedi, düz çıxdı</span></div>
+        <p class="mcap">Confusion matrix. Xanaya toxun — həmin kartlar yuxarıda işıqlanacaq.</p>
+      </div>
+
+      <div class="metrics">
+        <div class="metric p">
+          <div class="top"><span class="name">Precision</span><span class="val" id="vP">—</span></div>
+          <div class="bar"><i id="bP"></i></div>
+          <span class="fx" id="fP"></span>
+          <span class="say" id="sP"></span>
+        </div>
+        <div class="metric r">
+          <div class="top"><span class="name">Recall</span><span class="val" id="vR">—</span></div>
+          <div class="bar"><i id="bR"></i></div>
+          <span class="fx" id="fR"></span>
+          <span class="say" id="sR"></span>
+        </div>
+        <div class="metric f">
+          <div class="top"><span class="name">F1</span><span class="val" id="vF">—</span></div>
+          <div class="bar"><i id="bF"></i></div>
+          <span class="fx" id="fF"></span>
+        </div>
+        <div class="minor"><span>Accuracy: <b class="mono" id="vA"></b></span><span id="sA"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CORE IDEA -->
+<section aria-labelledby="idea-h">
+  <h2 id="idea-h">İki sual, iki ölçü</h2>
+  <p>Hər şey dörd xanadan başlayır. Adlarını belə oxu: ikinci söz modelin <b>nə dediyidir</b> (positive = «5», negative = «5 deyil»), birinci söz isə bunun <b>düz olub-olmadığıdır</b> (true = düz, false = səhv). Məsələn, <span class="tag t-FP">FP</span> = «səhvən 5 dedi».</p>
+  <div class="two">
+    <div class="panel p">
+      <h3>Precision <span>· dəqiqlik</span></h3>
+      <p class="q">«Model "5" deyəndə ona nə qədər inanmaq olar?»</p>
+      <p>Yalnız modelin <b>«5» dediyi</b> şəkillərə baxırsan və soruşursan: bunların neçəsi həqiqətən 5-dir?</p>
+      <p class="mono">precision = TP ÷ (TP + FP)</p>
+      <p>Bunu cəzalandıran səhv: <span class="tag t-FP">FP</span> — yalançı həyəcan.</p>
+    </div>
+    <div class="panel r">
+      <h3>Recall <span>· tapma gücü</span></h3>
+      <p class="q">«Bütün 5-lərin neçəsini tapdı?»</p>
+      <p>Yalnız <b>həqiqətən 5 olan</b> şəkillərə baxırsan və soruşursan: model bunların neçəsini tutdu?</p>
+      <p class="mono">recall = TP ÷ (TP + FN)</p>
+      <p>Bunu cəzalandıran səhv: <span class="tag t-FN">FN</span> — qaçırılan 5.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:8px">Torla balıq tutmaq misalı</h3>
+  <p>Göldə 6 balıq və çoxlu zibil var. Torunu atırsan, içinə 7 şey düşür: 4 balıq və 3 köhnə ayaqqabı.</p>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Sual</th><th>Hesab</th><th>Nəticə</th></tr>
+    <tr><td><b>Precision</b></td><td>Torun içindəkilərin neçəsi balıqdır?</td><td class="num">4 ÷ 7</td><td class="num">57%</td></tr>
+    <tr><td><b>Recall</b></td><td>Göldəki balıqların neçəsini tutdun?</td><td class="num">4 ÷ 6</td><td class="num">67%</td></tr>
+  </table></div>
+  <p>Böyük tor atsan, bütün balıqları tutarsan (recall ↑), amma içinə zibil də çox dolar (precision ↓). Kiçik və dəqiq tor atsan, tutduğun hər şey balıq olar (precision ↑), amma çox balıq qaçar (recall ↓). Simulyatorda standart hədd (0.50) məhz bu misaldır.</p>
+</section>
+
+<!-- TRADE-OFF -->
+<section aria-labelledby="to-h">
+  <h2 id="to-h">Precision/recall trade-off</h2>
+  <p>Hədd yuxarı qalxdıqca model daha ehtiyatlı olur: az şeyə «5» deyir, dedikləri isə daha çox düz çıxır. Aşağı düşdükcə cəsarətli olur: hamını tutmağa çalışır, amma səhvən «5» dedikləri artır. İkisini birdən 100% etmək adətən mümkün deyil.</p>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Precision</span><span><i style="background:var(--rec)"></i>Recall</span><span><i style="background:var(--muted)"></i>Sənin həddin</span></div>
+  <div class="chartbox"><svg id="chart" viewBox="0 0 640 270" width="100%" style="min-width:420px" role="img" aria-label="Həddə görə precision və recall əyriləri"></svg></div>
+  <p class="hint">Diqqət: precision əyrisi pilləkən kimi yuxarı-aşağı tullana bilər, recall isə hədd artdıqca yalnız azalır. Səbəb: hədd qalxanda bir «5 deyil» kartı çıxsa, precision artır; bir «5» kartı çıxsa, precision azalır. Recall isə yalnız 5-lər itdikcə düşür.</p>
+</section>
+
+<!-- SCENARIOS -->
+<section aria-labelledby="sc-h">
+  <h2 id="sc-h">Hansı daha vacibdir? Tapşırıqdan asılıdır</h2>
+  <p>Həddi model yox, biz seçirik — səhvlərin hansının bizə daha baha başa gəldiyinə görə. Birinə toxun, simulyatordakı hədd də dəyişəcək.</p>
+  <div class="scen">
+    <button type="button" data-t="0.89" data-n="Hədd 0.89: model cəmi 2 dəfə «5» deyir və ikisi də düzdür (precision 100%). Amma 5-lərin çoxunu qaçırır (recall 33%). Uşaq filtri üçün bu qəbul ediləndir: yaxşı videonun rədd edilməsi, pis videonun keçməsindən yaxşıdır.">
+      <b>Uşaqlar üçün video filtri</b>
+      <span>«Təhlükəsizdir» dediyi hər video həqiqətən təhlükəsiz olmalıdır. Bir neçə yaxşı videonun rədd edilməsi problem deyil.</span>
+      <em>yüksək precision lazımdır</em>
+    </button>
+    <button type="button" data-t="0.25" data-n="Hədd 0.25: model bütün 5-ləri tapır (recall 100%), amma yarıdan çox həyəcanı yalançıdır (precision ~46%). Mağaza üçün bu normaldır: mühafizəçi bir neçə dəfə boş yerə yoxlayar, amma heç bir oğru qaçmaz.">
+      <b>Mağazada oğrunu tanımaq</b>
+      <span>Bir oğrunun belə qaçmasını istəmirik. Mühafizəçinin bir neçə dəfə boş yerə yoxlaması dözüləndir.</span>
+      <em>yüksək recall lazımdır</em>
+    </button>
+    <button type="button" data-t="0.30" data-n="Hədd 0.30: bütün xəstələr tapılır (recall 100%), bir neçə sağlam adam isə əlavə müayinəyə göndərilir (precision 50%). Tibbdə xəstəni qaçırmaq ən baha səhvdir, yalançı həyəcanı isə növbəti analiz aradan qaldırır.">
+      <b>Tibbi skrininq</b>
+      <span>Xəstə adama «sağlamsan» demək ən təhlükəli səhvdir. Yalançı həyəcanı sonrakı analiz düzəldir.</span>
+      <em>yüksək recall lazımdır</em>
+    </button>
+  </div>
+  <p id="scenNote" aria-live="polite"></p>
+</section>
+
+<!-- F1 -->
+<section aria-labelledby="f1-h">
+  <h2 id="f1-h">F1 — ikisini bir rəqəmdə birləşdirmək</h2>
+  <p>Modelləri müqayisə edəndə bir rəqəm rahatdır. Amma adi orta yaramır, çünki biri çox pis olanda da yaxşı görünə bilər. F1 <b>harmonik orta</b>dır: kiçik dəyərə daha çox çəki verir, yəni ikisindən biri zəifdirsə, F1 də aşağı düşür.</p>
+  <p class="mono" style="font-size:.95rem">F1 = 2 × precision × recall ÷ (precision + recall)</p>
+  <div class="tablewrap"><table>
+    <tr><th>Precision</th><th>Recall</th><th>Adi orta</th><th>F1</th><th>Nə deyir</th></tr>
+    <tr><td class="num">90%</td><td class="num">90%</td><td class="num">90%</td><td class="num">90%</td><td>İkisi də yaxşıdır — F1 də yaxşıdır</td></tr>
+    <tr><td class="num">80%</td><td class="num">40%</td><td class="num">60%</td><td class="num">53%</td><td>Recall zəifdir — F1 bunu göstərir</td></tr>
+    <tr><td class="num">100%</td><td class="num">10%</td><td class="num">55%</td><td class="num">18%</td><td>Adi orta «orta» deyir, F1 isə «pis» deyir</td></tr>
+  </table></div>
+  <p>Üçüncü sətir «Çox ehtiyatlı» düyməsinə bənzəyir: model bir dəfə əmin olanda «5» deyir və düz çıxır, amma qalan bütün 5-ləri qaçırır. F1 belə modelə aldanmır.</p>
+</section>
+
+<!-- BOOK NUMBERS -->
+<section aria-labelledby="bk-h">
+  <h2 id="bk-h">Kitabdakı rəqəmlər addım-addım</h2>
+  <p>Kitabda SGD modeli 60 000 MNIST şəkli üzərində bu confusion matrix-i verir:</p>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Model dedi: «5 deyil»</th><th>Model dedi: «5»</th></tr>
+    <tr><th>Əslində 5 deyil</th><td><span class="tag t-TN">TN</span> <span class="mono">53 892</span></td><td><span class="tag t-FP">FP</span> <span class="mono">687</span></td></tr>
+    <tr><th>Əslində 5</th><td><span class="tag t-FN">FN</span> <span class="mono">1 891</span></td><td><span class="tag t-TP">TP</span> <span class="mono">3 530</span></td></tr>
+  </table></div>
+  <div class="calc">
+    <div class="row"><span class="k">Precision</span><span class="mono">3 530 ÷ (3 530 + 687) = 3 530 ÷ 4 217 =</span><span class="res">83.7%</span></div>
+    <p class="hint" style="margin-top:-4px">Model 4 217 dəfə «5» dedi, onlardan 3 530-u düz çıxdı.</p>
+    <div class="row"><span class="k">Recall</span><span class="mono">3 530 ÷ (3 530 + 1 891) = 3 530 ÷ 5 421 =</span><span class="res">65.1%</span></div>
+    <p class="hint" style="margin-top:-4px">Datada cəmi 5 421 dənə 5 var idi, model onlardan 3 530-u tapdı, 1 891-ni qaçırdı.</p>
+    <div class="row"><span class="k">F1</span><span class="mono">2 × 0.837 × 0.651 ÷ (0.837 + 0.651) =</span><span class="res">0.733</span></div>
+    <div class="row"><span class="k">Accuracy</span><span class="mono">(53 892 + 3 530) ÷ 60 000 =</span><span class="res">95.7%</span></div>
+  </div>
+  <p>Gördüyün kimi, accuracy 95.7% parlaq görünür, amma model 5-lərin üçdə birini qaçırır. Səbəb datanın balanssız olmasıdır: şəkillərin ~90%-i onsuz da «5 deyil», ona görə TN xanası nəhəngdir və accuracy-ni şişirdir. Precision və recall düsturlarında TN ümumiyyətlə yoxdur — buna görə də onlar aldanmır. Simulyatorda «Heç kimə 5 demə» düyməsini bas: accuracy 70% qalır, recall isə 0% olur.</p>
+</section>
+
+<!-- MEMORY + QUIZ -->
+<section aria-labelledby="qz-h">
+  <h2 id="qz-h">Yadda saxlamaq və özünü yoxla</h2>
+  <div class="mem">
+    <p><b>Precision</b> — matrisdə <b>«Model dedi: 5»</b> sütununa bax. «Dediklərimin neçəsi düzdür?»</p>
+    <p><b>Recall</b> — matrisdə <b>«Əslində 5»</b> sətrinə bax. «Olanların neçəsini tapdım?»</p>
+    <p class="hint">Kodda: <code>precision_score(y, y_pred)</code>, <code>recall_score(y, y_pred)</code>, <code>f1_score(y, y_pred)</code>, hamısı birlikdə — <code>classification_report(y, y_pred)</code>.</p>
+  </div>
+  <div class="quiz">
+    <details><summary>1. Spam filtri yazırsan. Vacib iş məktubunun spam qovluğuna düşməsi çox pisdir. Hansını yüksək saxlamalısan?</summary>
+      <p><b>Precision.</b> Model «spam» deyəndə əmin olmalıdır. Arada bir spamın gələnlər qovluğuna keçməsi (FN) dözüləndir, vacib məktubun itməsi (FP) isə yox.</p></details>
+    <details><summary>2. 100 nəfərdən 10-u xəstədir. Model 8 xəstəni tapdı, amma 20 sağlam adama da «xəstəsən» dedi. Precision və recall nədir?</summary>
+      <p>TP = 8, FN = 10 − 8 = 2, FP = 20.</p>
+      <p><b>Precision</b> = 8 ÷ (8 + 20) = <b>29%</b>. <b>Recall</b> = 8 ÷ (8 + 2) = <b>80%</b>. Skrininq üçün bu pis deyil: xəstələrin çoxu tapılıb, yalançı həyəcanları əlavə analiz təmizləyəcək.</p></details>
+    <details><summary>3. Ürək datasında model hamıya «xəstə deyil» dedi və accuracy 80% çıxdı. Recall nə qədərdir?</summary>
+      <p><b>0%.</b> Model heç bir xəstəni tapmadı (TP = 0). Precision isə hesablana bilmir, çünki model bir dəfə də olsun «xəstə» demədi (TP + FP = 0). Sənin öz layihəndə gördüyün vəziyyət məhz bu idi.</p></details>
+    <details><summary>4. Bank datasında recall 0.61 çıxmışdı. Bankın daha çox müştəri tapmasını istəyirsən. Nə edərsən?</summary>
+      <p>Həddi 0.5-dən aşağı salarsan: <code>(model.predict_proba(X)[:, 1] >= 0.4)</code>. Recall artacaq, precision bir az düşəcək — yəni bir neçə boş zəng artıq olacaq. Bank üçün bu, adətən sərfəlidir.</p></details>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  const items = [
+    {d:'5',s:.96,y:1},{d:'5',s:.90,y:1},{d:'6',s:.88,y:0},{d:'5',s:.83,y:1},{d:'5',s:.71,y:1},
+    {d:'3',s:.64,y:0},{d:'8',s:.55,y:0},{d:'5',s:.48,y:1},{d:'9',s:.42,y:0},{d:'6',s:.37,y:0},
+    {d:'3',s:.33,y:0},{d:'5',s:.30,y:1},{d:'8',s:.26,y:0},{d:'0',s:.21,y:0},{d:'2',s:.17,y:0},
+    {d:'7',s:.13,y:0},{d:'1',s:.10,y:0},{d:'4',s:.07,y:0},{d:'1',s:.04,y:0},{d:'7',s:.02,y:0}
+  ];
+  const $ = id => document.getElementById(id);
+  const cardsEl = $('cards'), slider = $('thr');
+  const divider = document.createElement('div');
+  divider.className = 'divider';
+  divider.innerHTML = '<span></span>';
+
+  const cardEls = items.map(it => {
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = '<span class="tag"></span><span class="dg">'+it.d+'</span><span class="sc">'+it.s.toFixed(2)+'</span>';
+    cardsEl.appendChild(c);
+    return c;
+  });
+
+  function kind(it, t){
+    const pred = it.s >= t;
+    if (pred && it.y) return 'TP';
+    if (pred && !it.y) return 'FP';
+    if (!pred && it.y) return 'FN';
+    return 'TN';
+  }
+  function stats(t){
+    const c = {TP:0,FP:0,FN:0,TN:0};
+    items.forEach(it => c[kind(it,t)]++);
+    const P = (c.TP+c.FP) ? c.TP/(c.TP+c.FP) : null;
+    const R = (c.TP+c.FN) ? c.TP/(c.TP+c.FN) : null;
+    const F = (P!==null && R!==null && P+R>0) ? 2*P*R/(P+R) : (P===null ? null : 0);
+    const A = (c.TP+c.TN)/items.length;
+    return {c,P,R,F,A};
+  }
+  const pct = v => v===null ? '—' : Math.round(v*100)+'%';
+
+  function update(){
+    const t = slider.value/100;
+    const tShow = slider.value > 100 ? '>1' : t.toFixed(2);
+    $('thrVal').textContent = tShow;
+    divider.firstChild.textContent = 'hədd ' + tShow;
+    let placed = false;
+    items.forEach((it,i) => {
+      const k = kind(it,t), el = cardEls[i];
+      el.className = 'card ' + k + (it.s>=t ? ' pred' : '');
+      const tg = el.firstChild; tg.className = 'tag t-'+k; tg.textContent = k;
+      el.setAttribute('aria-label', 'Rəqəm '+it.d+', bal '+it.s.toFixed(2)+', '+k);
+      if (!placed && it.s < t){ cardsEl.insertBefore(divider, el); placed = true; }
+    });
+    if (!placed) cardsEl.appendChild(divider);
+
+    const s = stats(t), c = s.c;
+    ['TP','FP','FN','TN'].forEach(k => $('c'+k).textContent = c[k]);
+    const said = c.TP + c.FP, real = c.TP + c.FN;
+
+    $('vP').textContent = pct(s.P); $('bP').style.width = (s.P||0)*100+'%';
+    $('fP').textContent = 'TP ÷ (TP + FP) = '+c.TP+' ÷ ('+c.TP+' + '+c.FP+')' + (said ? ' = '+c.TP+' ÷ '+said : '');
+    $('sP').textContent = said
+      ? 'Model '+said+' şəklə «5» dedi. Onlardan həqiqətən 5 olanlar: '+c.TP+'.'
+      : 'Model heç bir şəklə «5» demədi — precision hesablana bilmir (0 ÷ 0).';
+
+    $('vR').textContent = pct(s.R); $('bR').style.width = (s.R||0)*100+'%';
+    $('fR').textContent = 'TP ÷ (TP + FN) = '+c.TP+' ÷ ('+c.TP+' + '+c.FN+') = '+c.TP+' ÷ '+real;
+    $('sR').textContent = 'Datada cəmi '+real+' dənə 5 var. Model tapdı: '+c.TP+', qaçırdı: '+c.FN+'.';
+
+    $('vF').textContent = s.F===null ? '—' : s.F.toFixed(2);
+    $('bF').style.width = (s.F||0)*100+'%';
+    $('fF').textContent = (s.P===null) ? 'Precision olmadığı üçün F1 də yoxdur.'
+      : '2 × '+s.P.toFixed(2)+' × '+s.R.toFixed(2)+' ÷ ('+s.P.toFixed(2)+' + '+s.R.toFixed(2)+')';
+
+    $('vA').textContent = pct(s.A);
+    $('sA').textContent = (c.TP===0) ? '← accuracy yüksək görünür, amma model heç bir 5 tapmır'
+      : '(TP + TN) ÷ 20 = ('+c.TP+' + '+c.TN+') ÷ 20';
+
+    drawMarker(t, s);
+  }
+
+  /* chart */
+  const svg = $('chart'), NS = 'http://www.w3.org/2000/svg';
+  const L=46,R=16,T=14,B=40,W=640,H=270, pw=W-L-R, ph=H-T-B;
+  const X = t => L + Math.min(t,1)*pw, Y = v => T + (1-v)*ph;
+  function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); (parent||svg).appendChild(e); return e; }
+  function drawBase(){
+    [0,.25,.5,.75,1].forEach(v => {
+      el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:'var(--line)','stroke-width':1});
+      const tx = el('text',{x:L-8,y:Y(v)+4,'text-anchor':'end'}); tx.textContent = Math.round(v*100)+'%';
+    });
+    [0,.2,.4,.6,.8,1].forEach(v => {
+      const tx = el('text',{x:X(v),y:H-B+18,'text-anchor':'middle'}); tx.textContent = v.toFixed(1);
+    });
+    const lab = el('text',{x:L+pw/2,y:H-6,'text-anchor':'middle'}); lab.textContent = 'hədd (threshold)';
+    let pP='', pR='';
+    for(let i=0;i<=100;i++){
+      const t=i/100, s=stats(t);
+      if (s.P!==null) pP += (pP?' L':'M')+X(t).toFixed(1)+' '+Y(s.P).toFixed(1);
+      pR += (pR?' L':'M')+X(t).toFixed(1)+' '+Y(s.R).toFixed(1);
+    }
+    el('path',{d:pR,fill:'none',stroke:'var(--rec)','stroke-width':2.5,'stroke-linejoin':'round'});
+    el('path',{d:pP,fill:'none',stroke:'var(--accent)','stroke-width':2.5,'stroke-linejoin':'round'});
+  }
+  drawBase();
+  const mLine = el('line',{y1:T,y2:T+ph,stroke:'var(--muted)','stroke-width':1.5,'stroke-dasharray':'4 4'});
+  const dP = el('circle',{r:5.5,fill:'var(--accent)',stroke:'var(--surface)','stroke-width':2});
+  const dR = el('circle',{r:5.5,fill:'var(--rec)',stroke:'var(--surface)','stroke-width':2});
+  function drawMarker(t, s){
+    const x = X(t);
+    mLine.setAttribute('x1',x); mLine.setAttribute('x2',x);
+    dR.setAttribute('cx',x); dR.setAttribute('cy',Y(s.R));
+    if (s.P===null){ dP.setAttribute('visibility','hidden'); }
+    else { dP.removeAttribute('visibility'); dP.setAttribute('cx',x); dP.setAttribute('cy',Y(s.P)); }
+  }
+
+  /* controls */
+  function setT(v){ slider.value = Math.round(parseFloat(v)*100); update(); }
+  slider.addEventListener('input', () => { clearScen(); update(); });
+  slider.max = 101;
+  document.querySelectorAll('.presets button').forEach(b => b.addEventListener('click', () => { clearScen(); setT(b.dataset.t); }));
+
+  const scenBtns = document.querySelectorAll('.scen button');
+  function clearScen(){ scenBtns.forEach(b => b.setAttribute('aria-pressed','false')); $('scenNote').textContent=''; }
+  scenBtns.forEach(b => {
+    b.setAttribute('aria-pressed','false');
+    b.addEventListener('click', () => { clearScen(); b.setAttribute('aria-pressed','true'); setT(b.dataset.t); $('scenNote').textContent = b.dataset.n; });
+  });
+
+  /* matrix highlight */
+  const cells = document.querySelectorAll('.cell');
+  let locked = null;
+  function hl(k){ cardsEl.className = 'cards' + (k ? ' hl hl-'+k : ''); cells.forEach(c => c.classList.toggle('on', c.dataset.k===k)); }
+  cells.forEach(c => {
+    c.addEventListener('mouseenter', () => hl(c.dataset.k));
+    c.addEventListener('mouseleave', () => hl(locked));
+    c.addEventListener('click', () => { locked = (locked===c.dataset.k) ? null : c.dataset.k; hl(locked); });
+    c.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); c.click(); } });
+  });
+
+  update();
+})();
+</script>
+
+</body>
+</html>
