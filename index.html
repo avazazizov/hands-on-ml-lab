@@ -163,6 +163,7 @@ tr.hl td{background:var(--soft)}
 .tok.q{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .tok .w{display:block;font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
 .wbar{height:10px;border-radius:5px;background:var(--accent);min-width:2px}
+#svm-cv{touch-action:none;cursor:crosshair}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -181,6 +182,7 @@ tr.hl td{background:var(--soft)}
     <a href="#gd" data-id="gd"><span class="ch">Fəsil 4</span><span class="t">Gradient descent</span></a>
     <a href="#overfit" data-id="overfit"><span class="ch">Fəsil 4</span><span class="t">Overfitting və regularizasiya</span></a>
     <a href="#gini" data-id="gini"><span class="ch">Fəsil 5</span><span class="t">Qərar ağacı və Gini</span></a>
+    <a href="#svm" data-id="svm"><span class="ch">Əlavə mövzu</span><span class="t">SVM və marja</span></a>
     <a href="#pca" data-id="pca"><span class="ch">Fəsil 7</span><span class="t">PCA</span></a>
     <a href="#kmeans" data-id="kmeans"><span class="ch">Fəsil 8</span><span class="t">K-means</span></a>
     <a href="#backprop" data-id="backprop"><span class="ch">Fəsil 9 · Əlavə A</span><span class="t">Backpropagation</span></a>
@@ -451,6 +453,75 @@ plot_tree(tree, filled=True)   <span class="c"># hər qutuda "gini = ..." görə
   </div>
 </section>
 
+<!-- =================== SVM =================== -->
+<section class="sim" id="s-svm" hidden>
+  <div class="sim-head">
+    <span class="eyebrow">Əlavə mövzu · Support Vector Machine</span>
+    <h2>SVM: iki sinif arasında ən geniş yol</h2>
+    <p class="lead">SVM iki sinfi sadəcə bir xətlə ayırmır — elə xətt seçir ki, hər iki tərəfdə mümkün qədər geniş boş yol qalsın.</p>
+  </div>
+  <div class="story">
+    <span class="tag">Həyatdan misal</span>
+    <p>İki məhəllə arasından magistral yol çəkməlisən. Yolu bir məhəlləyə çox yaxın salsan, ən kənardakı evlər yolun dibində qalar — bir az genişlənmə olsa, yol evlərə dəyəcək. Ağıllı mühəndis yolu düz ortadan, iki tərəfdəki ən yaxın evlərdən eyni məsafədə çəkir və onu mümkün qədər enli edir. Yolun yerini yalnız ən kənardakı evlər təyin edir — məhəllənin dərinliyindəki evlər heç nəyi dəyişmir.</p>
+    <dl class="map">
+      <dt>Yol</dt><dd>= <b>margin</b> (marja) — iki sinif arasındakı boş zolaq</dd>
+      <dt>Yolun ortası</dt><dd>= <b>qərar sərhədi</b>: bir tərəf «göy», o biri «qırmızı»</dd>
+      <dt>Yolun kənarındakı evlər</dt><dd>= <b>support vector</b>-lar — yolun yerini yalnız onlar təyin edir</dd>
+      <dt>C parametri</dt><dd>= mühəndisin <b>sərtliyi</b>: bir evin yolun içində qalmasına dözürmü?</dd>
+    </dl>
+  </div>
+  <div class="bench" id="b-svm">
+    <div class="tour" data-sim="svm"></div>
+    <div class="ctrls">
+      <div class="ctrl"><label for="svm-c">C (sərtlik): <span class="mono" id="svm-cv-l">100</span></label><input type="range" id="svm-c" min="0" max="8" value="8"></div>
+      <div class="ctrl" style="min-width:220px"><label for="svm-mode">Kətana toxunanda</label>
+        <select id="svm-mode"><option value="drag">nöqtəni sürüşdür</option><option value="0">göy nöqtə əlavə et</option><option value="1">qırmızı nöqtə əlavə et</option></select></div>
+      <div class="btns"><button id="svm-reset" type="button">Sıfırla</button></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--c1)"></i>göy sinif</span><span><i style="background:var(--c2);border-radius:2px"></i>qırmızı sinif</span><span><i class="ln" style="background:var(--ink)"></i>qərar sərhədi</span><span><i class="ln" style="background:var(--muted)"></i>yolun kənarları</span><span><i style="background:transparent;border:2px solid var(--warn)"></i>support vector</span></div>
+    <canvas id="svm-cv" aria-label="İki sinif nöqtələri, SVM-in qərar sərhədi və marjası. Nöqtələri sürüşdürmək olar."></canvas>
+    <div class="readout" id="svm-stats"></div>
+    <div class="status info" id="svm-msg"></div>
+  </div>
+  <div class="explain">
+    <h3>Addım-addım bələdçi</h3>
+    <ol class="guide" data-sim="svm">
+      <li><span class="gt">SVM iki sinfi ayırdı. Bərk xətt — sərhəd, qırıq xətlər — yolun kənarları. <b>Halqalı nöqtələr</b> yolun kənarına toxunur: bunlar support vector-lardır.</span><button class="go" type="button" data-set='{"svm-c":8}' data-call="svm:preset:reset">Göstər</button>
+        <details><summary>Niyə məhz bu xətt?</summary><p>Göyləri qırmızılardan ayıran sonsuz sayda xətt var. SVM onların arasından ən yaxın nöqtələrə qədər məsafəsi ən böyük olanı seçir. Geniş yol o deməkdir ki, yeni gələn nöqtə bir az fərqli yerdə olsa belə, düzgün tərəfə düşəcək.</p></details></li>
+      <li><span class="gt">Support vector <b>olmayan</b> bir göy nöqtəni uzağa çəkdik. Sərhəd <b>heç tərpənmədi</b>.</span><button class="go" type="button" data-set='{"svm-c":8}' data-call="svm:preset:far">Göstər</button>
+        <details><summary>Bu nə deməkdir?</summary><p>SVM-in qərarı yalnız sərhədə yaxın bir neçə nöqtədən asılıdır. Uzaqdakı nöqtələri silsən də, yerini dəyişsən də, model eyni qalır. Özün də yoxla: «nöqtəni sürüşdür» rejimində halqalı nöqtəni tərpət — sərhəd dərhal dəyişəcək.</p></details></li>
+      <li><span class="gt">Göylərin yanına <b>bir qırmızı outlier</b> düşdü. C böyükdür (100) — SVM onu da düzgün tərəfdə saxlamaq üçün yolu <b>daraldır və əyir</b>.</span><button class="go" type="button" data-set='{"svm-c":8}' data-call="svm:preset:outlier">Göstər</button>
+        <details><summary>Bu niyə pisdir?</summary><p>Bir səhv və ya qeyri-adi nöqtə bütün modeli dəyişdi. Yol dar oldu, yəni yeni nöqtələrdə səhv riski artdı. Bu, SVM-in overfitting formasıdır: model bir istisnanı «əzbərləməyə» çalışır.</p></details></li>
+      <li><span class="gt">Eyni data, amma C kiçikdir (0.1). SVM outlier-ə <b>göz yumur</b>: onu səhv tərəfdə (✕) qoyur, amma yolu yenidən geniş saxlayır.</span><button class="go" type="button" data-set='{"svm-c":2}' data-call="svm:preset:outlier">Göstər</button>
+        <details><summary>C nəyi idarə edir?</summary><p>C = yolun içinə düşən hər nöqtənin «cəriməsi». C böyükdür → cərimə ağırdır → model heç bir pozuntuya dözmür (hard margin), overfit riski. C kiçikdir → cərimə yüngüldür → model bir neçə pozuntuya göz yumur, yol geniş olur (soft margin). Ən yaxşı C cross-validation ilə seçilir.</p></details></li>
+    </ol>
+    <div class="key"><b>Yadda saxla</b>
+      <ul>
+        <li>SVM sinifləri <b>ən geniş marja</b> ilə ayırır. Qərarı yalnız <b>support vector</b>-lar təyin edir.</li>
+        <li><b>C böyük</b> → dar yol, səhvə dözmür, overfit riski. <b>C kiçik</b> → enli yol, bir neçə səhvə dözür.</li>
+        <li>Düz xətlə ayrılmayan data üçün <b>kernel</b> (məs. RBF) istifadə olunur: data daha çox ölçülü fəzaya «qaldırılır» və orada düz kəsilir.</li>
+        <li>SVM məsafə ilə işləyir — ondan əvvəl <b>StandardScaler mütləqdir</b>. Böyük datada (yüz minlərlə sətir) çox yavaşlayır.</li>
+      </ul></div>
+    <h3>Kodda</h3>
+<pre class="code">from sklearn.svm import SVC, LinearSVC
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+<span class="c"># düz xətlə ayırma (bu simulyasiyadakı kimi)</span>
+linear = make_pipeline(StandardScaler(), LinearSVC(C=1.0))
+
+<span class="c"># əyri sərhəd — RBF kernel</span>
+rbf = make_pipeline(StandardScaler(), SVC(kernel="rbf", C=1.0, gamma="scale"))
+rbf.fit(X_train, y_train)
+rbf[-1].support_vectors_      <span class="c"># support vector-ların özləri</span></pre>
+    <h3>Özünü yoxla</h3>
+    <div class="quiz">
+      <details><summary>1. Datadan support vector olmayan 100 nöqtəni silsək, SVM-in sərhədi dəyişərmi?</summary><p><b>Xeyr.</b> Sərhəd yalnız support vector-lardan asılıdır. Bu, SVM-i yaddaş baxımından da səmərəli edir: model öyrənəndən sonra yalnız onları saxlamaq kifayətdir.</p></details>
+      <details><summary>2. SVM train datasında 100%, test datasında 70% verir. C-ni artırmaq, yoxsa azaltmaq lazımdır?</summary><p><b>Azaltmaq.</b> Bu, overfitting-dir: model hər nöqtəni düzgün tərəfdə saxlamaq üçün yolu həddən çox daraldıb. Kiçik C yolu genişləndirir və modeli sadələşdirir. (RBF kernel-də <code>gamma</code>-nı azaltmaq da kömək edir.)</p></details>
+    </div>
+  </div>
+</section>
+   
 <!-- =================== PCA =================== -->
 <section class="sim" id="s-pca" hidden>
   <div class="sim-head">
@@ -1064,6 +1135,93 @@ const sims = {};
   sims.gini={draw};
 })();
 
+/* ---------------- SVM ---------------- */
+(function(){
+  const CS=[0.01,0.03,0.1,0.3,1,3,10,30,100];
+  let pts=[];
+  function base(){ const r=rng(21), out=[];
+    for(let i=0;i<10;i++) out.push({x:-2.1+gauss(r)*0.75, y:-0.6+gauss(r)*0.75, c:0});
+    for(let i=0;i<10;i++) out.push({x:2.1+gauss(r)*0.75, y:0.7+gauss(r)*0.75, c:1});
+    return out; }
+  pts=base();
+  let model=null;
+  function train(){
+    const n=pts.length, C=CS[+$('svm-c').value], X=pts.map(p=>[p.x,p.y]), Y=pts.map(p=>p.c?1:-1);
+    const K=(i,j)=>X[i][0]*X[j][0]+X[i][1]*X[j][1];
+    const a=new Array(n).fill(0); let b=0, passes=0, it=0; const r=rng(5), tol=1e-4;
+    const f=i=>{ let s=b; for(let j=0;j<n;j++) if(a[j]) s+=a[j]*Y[j]*K(j,i); return s; };
+    if(new Set(Y).size<2){ model=null; return; }
+    while(passes<40 && it<20000){ let changed=0;
+      for(let i=0;i<n;i++){ it++;
+        const Ei=f(i)-Y[i];
+        if((Y[i]*Ei<-tol&&a[i]<C)||(Y[i]*Ei>tol&&a[i]>0)){
+          let j=Math.floor(r()*(n-1)); if(j>=i) j++;
+          const Ej=f(j)-Y[j], ai=a[i], aj=a[j];
+          let L,H; if(Y[i]!==Y[j]){ L=Math.max(0,aj-ai); H=Math.min(C,C+aj-ai); } else { L=Math.max(0,ai+aj-C); H=Math.min(C,ai+aj); }
+          if(L===H) continue;
+          const eta=2*K(i,j)-K(i,i)-K(j,j); if(eta>=0) continue;
+          let nj=aj-Y[j]*(Ei-Ej)/eta; nj=Math.min(H,Math.max(L,nj)); if(Math.abs(nj-aj)<1e-6) continue;
+          const ni=ai+Y[i]*Y[j]*(aj-nj); a[i]=ni; a[j]=nj;
+          const b1=b-Ei-Y[i]*(ni-ai)*K(i,i)-Y[j]*(nj-aj)*K(i,j);
+          const b2=b-Ej-Y[i]*(ni-ai)*K(i,j)-Y[j]*(nj-aj)*K(j,j);
+          b=(ni>0&&ni<C)?b1:(nj>0&&nj<C)?b2:(b1+b2)/2; changed++; } }
+      passes = changed===0 ? passes+1 : 0; }
+    let w0=0,w1=0; for(let i=0;i<n;i++){ w0+=a[i]*Y[i]*X[i][0]; w1+=a[i]*Y[i]*X[i][1]; }
+    const sv=a.map(v=>v>1e-4), m=pts.map((p,i)=>Y[i]*(w0*p.x+w1*p.y+b));
+    model={w0,w1,b,C,sv,m};
+  }
+  const view={X:null,Y:null,ix:null,iy:null};
+  function draw(){
+    train();
+    const cv=$('svm-cv'), {ctx,w,h}=fit(cv,0.62,300,460);
+    const sc=Math.min(w/10.4,h/7.6), cx=w/2, cy=h/2;
+    view.X=x=>cx+x*sc; view.Y=y=>cy-y*sc; view.ix=px=>(px-cx)/sc; view.iy=py=>(cy-py)/sc;
+    const X=view.X, Y=view.Y;
+    if(model){
+      const {w0,w1,b}=model, g=10, c1=css('c1'), c2=css('c2'), wn=css('warn');
+      for(let px=0;px<w;px+=g) for(let py=0;py<h;py+=g){
+        const v=w0*view.ix(px+g/2)+w1*view.iy(py+g/2)+b;
+        ctx.globalAlpha=Math.abs(v)<1?0.16:0.07; ctx.fillStyle=Math.abs(v)<1?wn:(v>0?c2:c1); ctx.fillRect(px,py,g,g); }
+      ctx.globalAlpha=1;
+      const line=(k,col,dash,lw)=>{ const pts2=[]; // w0 x + w1 y + b = k
+        if(Math.abs(w1)>Math.abs(w0)){ [-6,6].forEach(x=>pts2.push([X(x),Y((k-b-w0*x)/w1)])); }
+        else { [-5,5].forEach(y=>pts2.push([X((k-b-w1*y)/w0),Y(y)])); }
+        path(ctx,pts2,col,lw,dash); };
+      line(0,css('ink'),[],2.5); line(1,css('muted'),[6,5],1.5); line(-1,css('muted'),[6,5],1.5);
+    }
+    pts.forEach((p,i)=>{ const x=X(p.x), y=Y(p.y);
+      if(p.c===0) dot(ctx,x,y,7,css('c1'),css('surface'),1.5); else { ctx.fillStyle=css('c2'); ctx.fillRect(x-6.5,y-6.5,13,13); ctx.strokeStyle=css('surface'); ctx.lineWidth=1.5; ctx.strokeRect(x-6.5,y-6.5,13,13); }
+      if(model&&model.sv[i]) dot(ctx,x,y,12,null,css('warn'),2.5);
+      if(model&&model.m[i]<0){ ctx.strokeStyle=css('bad'); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-10,y-10); ctx.lineTo(x+10,y+10); ctx.moveTo(x+10,y-10); ctx.lineTo(x-10,y+10); ctx.stroke(); } });
+    const C=CS[+$('svm-c').value]; $('svm-cv-l').textContent=String(C);
+    if(!model){ stats($('svm-stats'),[['yolun eni','—']]); status($('svm-msg'),'warn','Hər iki sinifdən ən azı bir nöqtə lazımdır.'); return; }
+    const width=2/Math.hypot(model.w0,model.w1), nsv=model.sv.filter(Boolean).length, inside=model.m.filter(v=>v<1-1e-3).length, wrong=model.m.filter(v=>v<0).length;
+    stats($('svm-stats'),[['yolun eni (marja)',width.toFixed(2)],['support vector sayı',String(nsv)],['yolun içində',String(inside)],['səhv tərəfdə',String(wrong)]]);
+    let cls='info', msg;
+    if(C>=30) msg='<b>Sərt marja (C = '+C+').</b> SVM yolun içinə heç bir nöqtə buraxmamağa çalışır. '+(inside? inside+' nöqtə yenə də içəridədir — data düz xətlə tam ayrılmır.':'Bütün nöqtələr yolun kənarında və ya ondan kənardadır.');
+    else if(C<=0.3) msg='<b>Yumşaq marja (C = '+C+').</b> Pozuntunun cəriməsi yüngüldür: SVM '+inside+' nöqtənin yolun içində qalmasına dözür və yolu enli saxlayır (eni '+width.toFixed(2)+').';
+    else msg='<b>Orta sərtlik (C = '+C+').</b> Yolun eni '+width.toFixed(2)+', '+inside+' nöqtə yolun içindədir. C-ni dəyişib balansa bax.';
+    if(wrong) { cls='warn'; msg+=' <b>'+wrong+'</b> nöqtə sərhədin səhv tərəfindədir (✕ ilə işarələnib).'; }
+    status($('svm-msg'),cls,msg);
+  }
+  /* interaction */
+  const cv=$('svm-cv'); let dragI=-1;
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+  cv.addEventListener('pointerdown',e=>{ if(!view.X) return; const [px,py]=pos(e), mode=$('svm-mode').value;
+    if(mode==='drag'){ let best=-1,bd=18*18; pts.forEach((p,i)=>{ const d=(view.X(p.x)-px)**2+(view.Y(p.y)-py)**2; if(d<bd){bd=d;best=i;} }); dragI=best; if(best>=0) cv.setPointerCapture(e.pointerId); }
+    else { pts.push({x:view.ix(px),y:view.iy(py),c:+mode}); draw(); } });
+  cv.addEventListener('pointermove',e=>{ if(dragI<0) return; const [px,py]=pos(e);
+    pts[dragI].x=Math.max(-5,Math.min(5,view.ix(px))); pts[dragI].y=Math.max(-3.7,Math.min(3.7,view.iy(py))); draw(); });
+  const up=()=>{ dragI=-1; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  $('svm-c').addEventListener('input',draw);
+  $('svm-reset').addEventListener('click',()=>{ pts=base(); draw(); });
+  sims.svm={draw, preset(name){
+    pts=base();
+    if(name==='far'){ train(); let bi=-1,bm=-1; pts.forEach((p,i)=>{ if(p.c===0&&!model.sv[i]&&model.m[i]>bm){bm=model.m[i];bi=i;} }); if(bi>=0){ pts[bi].x=-4.6; pts[bi].y=-3.2; } }
+    if(name==='outlier') pts.push({x:-0.9,y:-0.2,c:1});
+    $('svm-mode').value='drag'; draw(); }};
+})();
+   
 /* ---------------- PCA ---------------- */
 (function(){
   const r=rng(3), P=[], ang=35*Math.PI/180;
