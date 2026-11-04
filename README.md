@@ -13,6 +13,7 @@ Aurélien Géron-un *Hands-On Machine Learning with Scikit-Learn and PyTorch* ki
 | 4 | Gradient descent | Learning rate-in təsiri: yavaş, zig-zag, partlama |
 | 4 | Overfitting və regularizasiya | Polinomun dərəcəsi, train/validation xətası, Ridge α |
 | 5 | Qərar ağacı və Gini | Bölgü həddi, Gini qarışıqlığı, ən yaxşı bölgü |
+| Əlavə | SVM və marja | Ən geniş yol, support vector-lar, C parametri; nöqtələri sürüşdürmək olur |
 | 7 | PCA | Proyeksiya, saxlanan variasiya, PC1 və PC2 |
 | 8 | K-means | Təyin etmə və yeniləmə addımları, inertia, k seçimi |
 | 9 · Əlavə A | Backpropagation | Hesablama qrafında irəli və geri keçid, zəncir qaydası |
